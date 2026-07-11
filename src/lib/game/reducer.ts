@@ -1,4 +1,4 @@
-import { DEFAULT_TEAM_NAMES, WINNING_SCORE } from "./constants";
+import { DEFAULT_TARGET_SCORE, DEFAULT_TEAM_NAMES } from "./constants";
 import { drawPhrase, requeueSkipped } from "./deck";
 import type { GameEvent, GameState, Rng, TeamIndex } from "./types";
 
@@ -11,7 +11,11 @@ export const createInitialState = (): GameState => ({
   holdingTeam: 0,
   deck: { remaining: [], used: [] },
   currentPhrase: null,
-  settings: { categoryId: "everything", stealRuleEnabled: false },
+  settings: {
+    categoryId: "everything",
+    stealRuleEnabled: false,
+    targetScore: DEFAULT_TARGET_SCORE,
+  },
   lastPointWinner: null,
 });
 
@@ -34,7 +38,10 @@ const awardPoints = (
     ...state,
     teams,
     lastPointWinner: team,
-    phase: teams[team].score >= WINNING_SCORE ? "gameOver" : state.phase,
+    phase:
+      teams[team].score >= state.settings.targetScore
+        ? "gameOver"
+        : state.phase,
   };
 };
 

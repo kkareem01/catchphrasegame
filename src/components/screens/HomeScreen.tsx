@@ -5,7 +5,11 @@ import { BigButton } from "@/components/ui/BigButton";
 import { useGame } from "@/hooks/useGame";
 import { beepPlayer } from "@/lib/audio/beepPlayer";
 import { getCategoryChoices, getPhrasesForCategory } from "@/lib/data";
-import { DEFAULT_TEAM_NAMES } from "@/lib/game/constants";
+import {
+  DEFAULT_TARGET_SCORE,
+  DEFAULT_TEAM_NAMES,
+  TARGET_SCORE_OPTIONS,
+} from "@/lib/game/constants";
 import { createDeck } from "@/lib/game/deck";
 
 const CATEGORY_CHOICES = getCategoryChoices();
@@ -18,6 +22,7 @@ export function HomeScreen() {
     DEFAULT_TEAM_NAMES[1],
   ]);
   const [stealRuleEnabled, setStealRuleEnabled] = useState(false);
+  const [targetScore, setTargetScore] = useState(DEFAULT_TARGET_SCORE);
 
   const startGame = () => {
     // Must happen inside this tap handler: iOS unlocks audio on gesture only.
@@ -29,7 +34,7 @@ export function HomeScreen() {
         teamNames[1].trim() || DEFAULT_TEAM_NAMES[1],
       ],
       deck: createDeck(getPhrasesForCategory(categoryId), Math.random),
-      settings: { categoryId, stealRuleEnabled },
+      settings: { categoryId, stealRuleEnabled, targetScore },
     });
   };
 
@@ -79,6 +84,27 @@ export function HomeScreen() {
             {choice.name}
           </button>
         ))}
+      </section>
+
+      <section aria-label="Points to win">
+        <p className="mb-2 text-sm font-semibold opacity-70">First to…</p>
+        <div className="grid grid-cols-4 gap-2">
+          {TARGET_SCORE_OPTIONS.map((points) => (
+            <button
+              key={points}
+              type="button"
+              onClick={() => setTargetScore(points)}
+              aria-pressed={targetScore === points}
+              className={`rounded-xl py-3 text-lg font-bold border transition-colors ${
+                targetScore === points
+                  ? "bg-accent text-background border-accent"
+                  : "bg-surface border-white/10 active:bg-white/10"
+              }`}
+            >
+              {points}
+            </button>
+          ))}
+        </div>
       </section>
 
       <label className="flex items-center justify-between rounded-xl bg-surface border border-white/10 px-4 py-3">

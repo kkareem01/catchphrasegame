@@ -1,5 +1,8 @@
-/** First team to reach this score wins the game. */
-export const WINNING_SCORE = 7;
+/** Selectable "first to N points" targets shown on the home screen. */
+export const TARGET_SCORE_OPTIONS: readonly number[] = [3, 5, 7, 10];
+
+/** Default winning score (classic Catch Phrase). */
+export const DEFAULT_TARGET_SCORE = 7;
 
 /** Round duration is drawn uniformly from this range (hidden from players). */
 export const ROUND_DURATION_MIN_MS = 45_000;
@@ -26,6 +29,10 @@ export const BEEP_DURATION_MS = 80;
 /** Buzzer tone (Hz) and duration. */
 export const BUZZER_FREQUENCY_HZ = 160;
 export const BUZZER_DURATION_MS = 1_200;
+
+/** Rising two-note chime played when a phrase is guessed correctly. */
+export const CORRECT_TONE_FREQUENCIES: readonly number[] = [660, 988];
+export const CORRECT_TONE_DURATION_MS = 90;
 
 /** Vibration pattern (ms on/off) fired with the buzzer, where supported. */
 export const BUZZER_VIBRATION_PATTERN: readonly number[] = [400, 100, 400];

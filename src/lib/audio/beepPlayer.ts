@@ -3,11 +3,14 @@ import {
   BEEP_FREQUENCY_HZ,
   BUZZER_DURATION_MS,
   BUZZER_FREQUENCY_HZ,
+  CORRECT_TONE_DURATION_MS,
+  CORRECT_TONE_FREQUENCIES,
 } from "@/lib/game/constants";
 
 const MS_PER_SECOND = 1_000;
 const BEEP_GAIN = 0.25;
 const BUZZER_GAIN = 0.5;
+const CORRECT_GAIN = 0.3;
 
 /**
  * Thin wrapper around one AudioContext. Beeps are scheduled against the
@@ -57,6 +60,23 @@ class BeepPlayer {
       durationMs: BUZZER_DURATION_MS,
       gain: BUZZER_GAIN,
       type: "sawtooth",
+    });
+  }
+
+  /** Plays a short rising chime immediately (a phrase was guessed right). */
+  playCorrect(): void {
+    if (!this.context) return;
+    const startTime = this.context.currentTime;
+    CORRECT_TONE_FREQUENCIES.forEach((frequency, index) => {
+      this.scheduleTone(
+        startTime + (index * CORRECT_TONE_DURATION_MS) / MS_PER_SECOND,
+        {
+          frequency,
+          durationMs: CORRECT_TONE_DURATION_MS,
+          gain: CORRECT_GAIN,
+          type: "triangle",
+        },
+      );
     });
   }
 

@@ -23,7 +23,7 @@ export function RoundEndScreen() {
 
   return (
     <main className="flex flex-1 flex-col animate-buzzer-flash">
-      <ScoreBoard state={state} />
+      <ScoreBoard />
 
       <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
         <p className="text-6xl">🚨</p>

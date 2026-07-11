@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { WINNING_SCORE } from "./constants";
+import { DEFAULT_TARGET_SCORE } from "./constants";
 import { createInitialState, gameReducer } from "./reducer";
 import type { Deck, GameSettings, GameState } from "./types";
 
-const SETTINGS: GameSettings = { categoryId: "everything", stealRuleEnabled: false };
+const TARGET = DEFAULT_TARGET_SCORE;
+const SETTINGS: GameSettings = {
+  categoryId: "everything",
+  stealRuleEnabled: false,
+  targetScore: TARGET,
+};
 const STEAL_SETTINGS: GameSettings = { ...SETTINGS, stealRuleEnabled: true };
 
 const deckOf = (...phrases: string[]): Deck => ({ remaining: phrases, used: [] });
@@ -86,10 +91,26 @@ describe("BUZZER without steal rule", () => {
   });
 
   it("ends the game when the non-holding team reaches the winning score", () => {
-    const nearWin = withScores(startedGame(), [0, WINNING_SCORE - 1]);
+    const nearWin = withScores(startedGame(), [0, TARGET - 1]);
     const state = gameReducer(nearWin, { type: "BUZZER" });
     expect(state.phase).toBe("gameOver");
-    expect(state.teams[1].score).toBe(WINNING_SCORE);
+    expect(state.teams[1].score).toBe(TARGET);
+  });
+
+  it("respects a custom target score chosen at game start", () => {
+    const shortGame = startedGame({ ...SETTINGS, targetScore: 3 });
+    const nearWin = withScores(shortGame, [0, 2]);
+    const state = gameReducer(nearWin, { type: "BUZZER" });
+    expect(state.phase).toBe("gameOver");
+    expect(state.teams[1].score).toBe(3);
+  });
+
+  it("does not end the game before reaching a higher target", () => {
+    const longGame = startedGame({ ...SETTINGS, targetScore: 10 });
+    const nearWin = withScores(longGame, [0, 6]);
+    const state = gameReducer(nearWin, { type: "BUZZER" });
+    expect(state.phase).toBe("roundEnd");
+    expect(state.teams[1].score).toBe(7);
   });
 });
 
@@ -115,11 +136,11 @@ describe("BUZZER with steal rule", () => {
   });
 
   it("ends the game if the steal points reach the winning score", () => {
-    const nearWin = withScores(startedGame(STEAL_SETTINGS), [0, WINNING_SCORE - 2]);
+    const nearWin = withScores(startedGame(STEAL_SETTINGS), [0, TARGET - 2]);
     const buzzed = gameReducer(nearWin, { type: "BUZZER" });
     const state = gameReducer(buzzed, { type: "RESOLVE_STEAL", stolen: true });
     expect(state.phase).toBe("gameOver");
-    expect(state.teams[1].score).toBe(WINNING_SCORE);
+    expect(state.teams[1].score).toBe(TARGET);
   });
 });
 
@@ -136,7 +157,7 @@ describe("START_NEXT_ROUND", () => {
 
 describe("NEW_GAME", () => {
   it("resets to setup from gameOver", () => {
-    const nearWin = withScores(startedGame(), [0, WINNING_SCORE - 1]);
+    const nearWin = withScores(startedGame(), [0, TARGET - 1]);
     const over = gameReducer(nearWin, { type: "BUZZER" });
     const state = gameReducer(over, { type: "NEW_GAME" });
     expect(state.phase).toBe("setup");

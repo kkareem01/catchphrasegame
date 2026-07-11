@@ -3,6 +3,7 @@
 import { BigButton } from "@/components/ui/BigButton";
 import { ScoreBoard } from "@/components/ui/ScoreBoard";
 import { useGame } from "@/hooks/useGame";
+import { beepPlayer } from "@/lib/audio/beepPlayer";
 
 const TEAM_TINT_CLASSES = [
   "bg-gradient-to-b from-team-a/15 to-transparent",
@@ -15,11 +16,16 @@ export function RoundActiveScreen() {
   const { state, dispatch } = useGame();
   const holder = state.holdingTeam;
 
+  const handleCorrect = () => {
+    beepPlayer.playCorrect();
+    dispatch({ type: "CORRECT" });
+  };
+
   return (
     <main
       className={`relative flex flex-1 flex-col ${TEAM_TINT_CLASSES[holder]}`}
     >
-      <ScoreBoard state={state} showHolder />
+      <ScoreBoard showHolder />
 
       <p className={`text-center text-sm font-semibold ${TEAM_TEXT_CLASSES[holder]}`}>
         {state.teams[holder].name} is describing
@@ -36,7 +42,7 @@ export function RoundActiveScreen() {
 
       <div className="flex flex-col gap-3 px-5 pb-[max(env(safe-area-inset-bottom),1.25rem)]">
         <BigButton
-          onClick={() => dispatch({ type: "CORRECT" })}
+          onClick={handleCorrect}
           className="py-10 text-3xl min-h-[28vh]"
         >
           Got it! Pass it on

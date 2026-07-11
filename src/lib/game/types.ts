@@ -13,6 +13,7 @@ export type Deck = Readonly<{
 export type GameSettings = Readonly<{
   categoryId: string;
   stealRuleEnabled: boolean;
+  targetScore: number;
 }>;
 
 export type GamePhase = "setup" | "roundActive" | "roundEnd" | "gameOver";
