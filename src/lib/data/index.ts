@@ -3,10 +3,12 @@ import { animals } from "./categories/animals";
 import { entertainment } from "./categories/entertainment";
 import { everydayLife } from "./categories/everyday-life";
 import { foodDrink } from "./categories/food-drink";
+import { kids } from "./categories/kids";
 import { popCulture } from "./categories/pop-culture";
 import { sports } from "./categories/sports";
 
 export const CATEGORIES: readonly Category[] = [
+  kids,
   everydayLife,
   entertainment,
   foodDrink,
@@ -28,7 +30,9 @@ export const getPhrasesForCategory = (
   categoryId: string,
 ): readonly string[] => {
   if (categoryId === EVERYTHING_CATEGORY_ID) {
-    return CATEGORIES.flatMap((c) => c.phrases);
+    return CATEGORIES.filter((c) => !c.excludeFromMix).flatMap(
+      (c) => c.phrases,
+    );
   }
   const category = CATEGORIES.find((c) => c.id === categoryId);
   if (!category) {

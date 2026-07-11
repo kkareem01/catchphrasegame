@@ -51,10 +51,31 @@ describe("getPhrasesForCategory", () => {
     expect(getPhrasesForCategory(first.id)).toEqual(first.phrases);
   });
 
-  it("returns the union of all categories for the Everything id", () => {
+  it("returns the union of mixable categories for the Everything id", () => {
     const everything = getPhrasesForCategory(EVERYTHING_CATEGORY_ID);
-    const expectedCount = CATEGORIES.reduce((n, c) => n + c.phrases.length, 0);
+    const expectedCount = CATEGORIES.filter((c) => !c.excludeFromMix).reduce(
+      (n, c) => n + c.phrases.length,
+      0,
+    );
     expect(everything.length).toBe(expectedCount);
+  });
+
+  it("keeps excluded categories out of the Everything mix", () => {
+    const excluded = CATEGORIES.filter((c) => c.excludeFromMix);
+    expect(excluded.length).toBeGreaterThan(0);
+
+    const everything = getPhrasesForCategory(EVERYTHING_CATEGORY_ID);
+    for (const category of excluded) {
+      for (const phrase of category.phrases) {
+        expect(everything).not.toContain(phrase);
+      }
+    }
+  });
+
+  it("still serves an excluded category when picked directly", () => {
+    for (const category of CATEGORIES.filter((c) => c.excludeFromMix)) {
+      expect(getPhrasesForCategory(category.id)).toEqual(category.phrases);
+    }
   });
 
   it("throws a clear error for an unknown category id", () => {

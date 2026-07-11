@@ -48,6 +48,11 @@ export type Category = Readonly<{
   name: string;
   emoji: string;
   phrases: readonly string[];
+  /**
+   * Kept out of the "Everything" mix while still directly selectable.
+   * Used by the easy/kids deck so it can't water down a grown-up game.
+   */
+  excludeFromMix?: boolean;
 }>;
 
 /** Random number generator returning a float in [0, 1). Injectable for tests. */
