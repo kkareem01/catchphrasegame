@@ -1,8 +1,8 @@
 "use client";
 
 import { BigButton } from "./BigButton";
+import { Modal } from "./Modal";
 
-/** Full-screen modal confirmation. Backdrop tap cancels (the safe choice). */
 export function ConfirmDialog({
   title,
   message,
@@ -19,22 +19,16 @@ export function ConfirmDialog({
   onCancel: () => void;
 }>) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6"
-      role="dialog"
-      aria-modal="true"
-      onClick={onCancel}
-    >
-      <div
-        className="w-full max-w-sm rounded-2xl border border-white/15 bg-surface p-6 text-center"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Modal onDismiss={onCancel}>
+      <div className="text-center">
         <h3 className="text-2xl font-black">{title}</h3>
-        {message ? (
-          <p className="mt-2 text-sm opacity-70">{message}</p>
-        ) : null}
+        {message ? <p className="mt-2 text-sm opacity-70">{message}</p> : null}
         <div className="mt-5 flex flex-col gap-3">
-          <BigButton onClick={onConfirm} variant="danger" className="py-4 text-lg">
+          <BigButton
+            onClick={onConfirm}
+            variant="danger"
+            className="py-4 text-lg"
+          >
             {confirmLabel}
           </BigButton>
           <BigButton
@@ -46,6 +40,6 @@ export function ConfirmDialog({
           </BigButton>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

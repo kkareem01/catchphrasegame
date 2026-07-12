@@ -2,14 +2,11 @@
 
 import { useState } from "react";
 import { BigButton } from "@/components/ui/BigButton";
+import { SettingsDialog } from "@/components/ui/SettingsDialog";
 import { useGame } from "@/hooks/useGame";
 import { beepPlayer } from "@/lib/audio/beepPlayer";
 import { getCategoryChoices, getPhrasesForCategory } from "@/lib/data";
-import {
-  DEFAULT_TARGET_SCORE,
-  DEFAULT_TEAM_NAMES,
-  TARGET_SCORE_OPTIONS,
-} from "@/lib/game/constants";
+import { DEFAULT_TARGET_SCORE, DEFAULT_TEAM_NAMES } from "@/lib/game/constants";
 import { createDeck } from "@/lib/game/deck";
 
 const CATEGORY_CHOICES = getCategoryChoices();
@@ -23,6 +20,7 @@ export function HomeScreen() {
   ]);
   const [stealRuleEnabled, setStealRuleEnabled] = useState(false);
   const [targetScore, setTargetScore] = useState(DEFAULT_TARGET_SCORE);
+  const [showSettings, setShowSettings] = useState(false);
 
   const startGame = () => {
     // Must happen inside this tap handler: iOS unlocks audio on gesture only.
@@ -39,7 +37,7 @@ export function HomeScreen() {
   };
 
   return (
-    <main className="flex flex-1 flex-col gap-6 px-5 pb-[max(env(safe-area-inset-bottom),1.25rem)] pt-[max(env(safe-area-inset-top),2rem)] max-w-lg w-full mx-auto">
+    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-5 pb-[max(env(safe-area-inset-bottom),1.25rem)] pt-[max(env(safe-area-inset-top),2rem)]">
       <div className="text-center">
         <h1 className="text-4xl font-black tracking-tight">
           Catch <span className="text-accent">Phrase</span>
@@ -61,8 +59,10 @@ export function HomeScreen() {
             }}
             maxLength={14}
             aria-label={`Team ${index + 1} name`}
-            className={`min-w-0 flex-1 rounded-xl bg-surface border px-4 py-3 text-center font-semibold outline-none focus:border-accent ${
-              index === 0 ? "border-team-a/40 text-team-a" : "border-team-b/40 text-team-b"
+            className={`min-w-0 flex-1 rounded-xl border bg-surface px-4 py-3 text-center font-semibold outline-none focus:border-accent ${
+              index === 0
+                ? "border-team-a/40 text-team-a"
+                : "border-team-b/40 text-team-b"
             }`}
           />
         ))}
@@ -74,10 +74,10 @@ export function HomeScreen() {
             key={choice.id}
             type="button"
             onClick={() => setCategoryId(choice.id)}
-            className={`rounded-xl px-3 py-3 text-left font-semibold border transition-colors ${
+            className={`rounded-xl border px-3 py-3 text-left font-semibold transition-colors ${
               categoryId === choice.id
-                ? "bg-accent text-background border-accent"
-                : "bg-surface border-white/10 active:bg-white/10"
+                ? "border-accent bg-accent text-background"
+                : "border-white/10 bg-surface active:bg-white/10"
             }`}
           >
             <span className="mr-2">{choice.emoji}</span>
@@ -86,45 +86,33 @@ export function HomeScreen() {
         ))}
       </section>
 
-      <section aria-label="Points to win">
-        <p className="mb-2 text-sm font-semibold opacity-70">First to…</p>
-        <div className="grid grid-cols-4 gap-2">
-          {TARGET_SCORE_OPTIONS.map((points) => (
-            <button
-              key={points}
-              type="button"
-              onClick={() => setTargetScore(points)}
-              aria-pressed={targetScore === points}
-              className={`rounded-xl py-3 text-lg font-bold border transition-colors ${
-                targetScore === points
-                  ? "bg-accent text-background border-accent"
-                  : "bg-surface border-white/10 active:bg-white/10"
-              }`}
-            >
-              {points}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <label className="flex items-center justify-between rounded-xl bg-surface border border-white/10 px-4 py-3">
-        <span>
-          <span className="font-semibold">Steal rule</span>
-          <span className="block text-xs opacity-60">
-            Other team can guess the last phrase for a bonus point
-          </span>
+      <button
+        type="button"
+        onClick={() => setShowSettings(true)}
+        className="flex items-center justify-between rounded-xl border border-white/10 bg-surface px-4 py-3 text-left active:bg-white/10"
+      >
+        <span className="flex items-center gap-2 font-semibold">
+          <span aria-hidden>⚙️</span>
+          Settings
         </span>
-        <input
-          type="checkbox"
-          checked={stealRuleEnabled}
-          onChange={(e) => setStealRuleEnabled(e.target.checked)}
-          className="h-6 w-6 accent-[color:var(--accent)]"
-        />
-      </label>
+        <span className="text-xs opacity-60">
+          First to {targetScore} · Steal {stealRuleEnabled ? "on" : "off"}
+        </span>
+      </button>
 
       <BigButton onClick={startGame} className="mt-auto py-6 text-2xl">
         Start Game
       </BigButton>
+
+      {showSettings ? (
+        <SettingsDialog
+          targetScore={targetScore}
+          onTargetScoreChange={setTargetScore}
+          stealRuleEnabled={stealRuleEnabled}
+          onStealRuleChange={setStealRuleEnabled}
+          onClose={() => setShowSettings(false)}
+        />
+      ) : null}
     </main>
   );
 }
