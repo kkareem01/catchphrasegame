@@ -6,7 +6,9 @@ import {
   getPhrasesForCategory,
 } from "./index";
 
-const MIN_PHRASES_PER_CATEGORY = 50;
+const MIN_PHRASES_PER_CATEGORY = 150;
+/** Longest phrase that still fits the card at a comfortable size. */
+const MAX_PHRASE_LENGTH = 30;
 
 describe("categories", () => {
   it("has at least six categories", () => {
@@ -40,6 +42,7 @@ describe("categories", () => {
       for (const phrase of category.phrases) {
         expect(phrase).toBe(phrase.trim());
         expect(phrase.length).toBeGreaterThan(0);
+        expect(phrase.length).toBeLessThanOrEqual(MAX_PHRASE_LENGTH);
       }
     }
   });
