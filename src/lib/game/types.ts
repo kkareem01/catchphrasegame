@@ -1,11 +1,4 @@
-/**
- * "teams": two teams alternate the phone; the team NOT holding it at the
- * buzzer scores. "solo": free-for-all for any number of players (great for
- * odd counts); whoever is caught holding the phone takes a strike.
- */
-export type GameMode = "teams" | "solo";
-
-/** A team (teams mode) or a player (solo mode). Score = points or strikes. */
+/** One of the two teams. */
 export type Competitor = Readonly<{
   name: string;
   score: number;
@@ -17,11 +10,9 @@ export type Deck = Readonly<{
 }>;
 
 export type GameSettings = Readonly<{
-  mode: GameMode;
   categoryId: string;
-  /** Teams mode only; ignored in solo. */
   stealRuleEnabled: boolean;
-  /** Score that ends the game: points to win (teams) or strikes to lose (solo). */
+  /** Points to win. */
   targetScore: number;
 }>;
 
@@ -29,16 +20,24 @@ export type GamePhase = "setup" | "roundActive" | "roundEnd" | "gameOver";
 
 export type GameState = Readonly<{
   phase: GamePhase;
+  /** The two teams. */
   competitors: readonly Competitor[];
-  /** Index into `competitors` of whoever holds the phone. */
+  /** Index of the team holding the phone. */
   holder: number;
+  /**
+   * Optional player names per team (either list may be empty). Lets uneven
+   * teams play fairly: the app names who gets the phone next, always someone
+   * on the other team.
+   */
+  rosters: readonly (readonly string[])[];
+  /** Per team: index into its roster of the player who describes next. */
+  rotation: readonly number[];
   deck: Deck;
   currentPhrase: string | null;
   settings: GameSettings;
   /**
-   * Competitor whose score changed when the buzzer fired: the scoring team
-   * (teams) or the caught player (solo). Null outside roundEnd/gameOver and
-   * while a steal is unresolved.
+   * Team awarded the point when the buzzer fired. Null outside
+   * roundEnd/gameOver and while a steal is unresolved.
    */
   lastScorer: number | null;
 }>;
@@ -47,6 +46,8 @@ export type GameEvent =
   | Readonly<{
       type: "START_GAME";
       names: readonly string[];
+      /** Player names per team; omit to play with team names only. */
+      rosters?: readonly (readonly string[])[];
       deck: Deck;
       settings: GameSettings;
     }>

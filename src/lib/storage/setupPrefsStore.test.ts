@@ -23,11 +23,11 @@ describe("createSetupPrefsStore", () => {
 
   it("loads and validates saved prefs", () => {
     const storage = memoryStorage({
-      [SETUP_PREFS_KEY]: JSON.stringify({ categoryId: "sports", mode: "nope" }),
+      [SETUP_PREFS_KEY]: JSON.stringify({ categoryId: "sports", targetScore: 999 }),
     });
     const store = createSetupPrefsStore(() => storage, CATEGORY_IDS);
     expect(store.getSnapshot().categoryId).toBe("sports");
-    expect(store.getSnapshot().mode).toBe("teams");
+    expect(store.getSnapshot().targetScore).toBe(DEFAULT_SETUP_PREFS.targetScore);
   });
 
   it("returns a stable snapshot reference between changes", () => {
@@ -65,9 +65,9 @@ describe("createSetupPrefsStore", () => {
     }, CATEGORY_IDS);
     expect(blocked.getSnapshot()).toEqual(DEFAULT_SETUP_PREFS);
     expect(() =>
-      blocked.update((prefs) => ({ ...prefs, mode: "solo" })),
+      blocked.update((prefs) => ({ ...prefs, stealRuleEnabled: true })),
     ).not.toThrow();
-    expect(blocked.getSnapshot().mode).toBe("solo");
+    expect(blocked.getSnapshot().stealRuleEnabled).toBe(true);
   });
 
   it("serves defaults for server rendering", () => {

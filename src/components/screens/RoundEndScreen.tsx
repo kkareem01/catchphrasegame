@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { BigButton } from "@/components/ui/BigButton";
-import { competitorColor } from "@/components/ui/colors";
+import { teamColor } from "@/components/ui/colors";
 import { ScoreBoard } from "@/components/ui/ScoreBoard";
 import { useGame } from "@/hooks/useGame";
 import { useVibration } from "@/hooks/useVibration";
 import { BUZZER_VIBRATION_PATTERN } from "@/lib/game/constants";
-import { isStealPending, otherTeamIndex } from "@/lib/game/selectors";
+import { describerOf, isStealPending, otherTeamIndex } from "@/lib/game/selectors";
 import type { GameState } from "@/lib/game/types";
 
 /**
@@ -20,8 +20,8 @@ export function RoundEndScreen() {
   const { state, dispatch } = useGame();
   const vibrate = useVibration();
   const [armed, setArmed] = useState(false);
-  const { mode } = state.settings;
-  const caught = state.competitors[state.holder];
+  const caughtTeam = state.competitors[state.holder].name;
+  const caughtPlayer = describerOf(state, state.holder);
   const stealPending = isStealPending(state);
 
   useEffect(() => {
@@ -47,8 +47,8 @@ export function RoundEndScreen() {
 
           <p className="text-lg">
             Caught holding it:{" "}
-            <span className="font-extrabold" style={{ color: competitorColor(mode, state.holder) }}>
-              {caught.name}
+            <span className="font-extrabold" style={{ color: teamColor(state.holder) }}>
+              {caughtPlayer ? `${caughtPlayer} (${caughtTeam})` : caughtTeam}
             </span>
           </p>
 
@@ -89,7 +89,7 @@ export function RoundEndScreen() {
               className="flex flex-col items-center py-5"
             >
               <span className="font-display text-2xl">Next round</span>
-              <span className="text-sm font-bold opacity-75">{caught.name} starts</span>
+              <span className="text-sm font-bold opacity-75">{caughtPlayer ?? caughtTeam} starts</span>
             </BigButton>
           )}
         </div>
@@ -99,14 +99,12 @@ export function RoundEndScreen() {
 }
 
 function Outcome({ state }: Readonly<{ state: GameState }>) {
-  const { mode, targetScore } = state.settings;
-
   if (isStealPending(state)) {
     const stealer = otherTeamIndex(state.holder);
     return (
       <p className="text-xl font-bold">
         Can{" "}
-        <span style={{ color: competitorColor(mode, stealer) }}>
+        <span style={{ color: teamColor(stealer) }}>
           {state.competitors[stealer].name}
         </span>{" "}
         guess it for a bonus point?
@@ -115,18 +113,13 @@ function Outcome({ state }: Readonly<{ state: GameState }>) {
   }
   if (state.lastScorer === null) return null;
 
-  const scorer = state.competitors[state.lastScorer];
-  const color = competitorColor(mode, state.lastScorer);
-  return mode === "teams" ? (
+  return (
     <p className="font-display text-2xl">
-      Point to <span style={{ color }}>{scorer.name}</span>!
-    </p>
-  ) : (
-    <p className="text-xl font-bold">
-      <span style={{ color }}>{scorer.name}</span> takes a strike 💣{" "}
-      <span className="text-muted">
-        ({scorer.score} of {targetScore})
+      Point to{" "}
+      <span style={{ color: teamColor(state.lastScorer) }}>
+        {state.competitors[state.lastScorer].name}
       </span>
+      !
     </p>
   );
 }

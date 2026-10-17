@@ -1,39 +1,22 @@
 "use client";
 
-import type { GameMode } from "@/lib/game/types";
 import { BigButton } from "./BigButton";
 import { Modal } from "./Modal";
 
-const COMMON_STEPS: readonly string[] = [
-  "Describe the phrase on screen without saying any word in it — no rhymes, no “sounds like”.",
-  "When someone guesses it, tap Got it! and hand the phone on. Stuck? Skip.",
+const STEPS: readonly string[] = [
+  "Split into two teams and sit so the teams alternate around the circle.",
+  "Describe the phrase on screen without saying any word in it — no rhymes, no “sounds like”. Only your teammates can guess.",
+  "When your team gets it, tap Got it! and hand the phone to the other team. Stuck? Skip.",
   "Beeps speed up as the hidden timer runs out. Nobody knows when it'll blow.",
+  "When the buzzer goes, the team NOT holding the phone scores a point.",
+  "Odd number of players? Make uneven teams and add player names — the game tells you who to pass to, always someone on the other team.",
 ];
 
-const MODE_STEPS: Record<GameMode, readonly string[]> = {
-  teams: [
-    "Sit so the teams alternate around the circle. Only your teammates can guess.",
-    "When the buzzer goes, the team NOT holding the phone scores a point.",
-  ],
-  solo: [
-    "Any number of players, 3 to 10 — perfect for odd groups. Sit in the order you entered names.",
-    "Everyone can guess. Whoever is caught holding the phone takes a strike 💣.",
-    "Hit the strike limit and you're out — fewest strikes wins.",
-  ],
-};
-
-export function HowToPlayDialog({
-  mode,
-  onClose,
-}: Readonly<{ mode: GameMode; onClose: () => void }>) {
-  const steps = [...COMMON_STEPS.slice(0, 1), ...MODE_STEPS[mode], ...COMMON_STEPS.slice(1)];
+export function HowToPlayDialog({ onClose }: Readonly<{ onClose: () => void }>) {
   return (
     <Modal title="How to play" onDismiss={onClose}>
-      <p className="mt-1 text-center text-sm font-bold text-muted">
-        {mode === "teams" ? "Teams" : "Free-for-all"}
-      </p>
       <ol className="mt-4 flex flex-col gap-3">
-        {steps.map((step, index) => (
+        {STEPS.map((step, index) => (
           <li key={step} className="flex gap-3">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent font-display text-sm text-[#1d1400]">
               {index + 1}

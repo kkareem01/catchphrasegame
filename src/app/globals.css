@@ -15,18 +15,6 @@
   --go-deep: #12985a;
   --danger: #ff4d5e;
   --danger-deep: #b3132a;
-
-  /* Free-for-all seat colours, readable on the dark stage. */
-  --p0: #2ee6f5;
-  --p1: #ff5fd2;
-  --p2: #ffd23f;
-  --p3: #3cf08f;
-  --p4: #ff8a3d;
-  --p5: #a78bfa;
-  --p6: #ff6b6b;
-  --p7: #7dd3fc;
-  --p8: #d9f99d;
-  --p9: #fda4af;
 }
 
 @theme inline {

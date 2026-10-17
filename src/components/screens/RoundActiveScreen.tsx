@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { BigButton } from "@/components/ui/BigButton";
-import { competitorColor, tint } from "@/components/ui/colors";
+import { teamColor, tint } from "@/components/ui/colors";
 import { ScoreBoard } from "@/components/ui/ScoreBoard";
 import { useGame } from "@/hooks/useGame";
 import { useVibration } from "@/hooks/useVibration";
@@ -11,7 +11,7 @@ import {
   CORRECT_TAP_COOLDOWN_MS,
   CORRECT_VIBRATION_PATTERN,
 } from "@/lib/game/constants";
-import { nextHolderIndex } from "@/lib/game/selectors";
+import { describerOf, nextHolderIndex } from "@/lib/game/selectors";
 
 /** Long phrases get a smaller size so they never overflow the card. */
 const LONG_PHRASE_CHARS = 16;
@@ -20,11 +20,13 @@ export function RoundActiveScreen() {
   const { state, dispatch } = useGame();
   const vibrate = useVibration();
   const lastCorrectAt = useRef(0);
-  const { mode } = state.settings;
-  const holder = state.competitors[state.holder];
-  const holderColor = competitorColor(mode, state.holder);
+  const holderTeam = state.competitors[state.holder].name;
+  const describer = describerOf(state, state.holder);
+  const holderColor = teamColor(state.holder);
   const nextIndex = nextHolderIndex(state);
-  const nextColor = competitorColor(mode, nextIndex);
+  const nextColor = teamColor(nextIndex);
+  const nextTeam = state.competitors[nextIndex].name;
+  const nextPlayer = describerOf(state, nextIndex);
   const phrase = state.currentPhrase ?? "";
 
   const handleCorrect = () => {
@@ -55,8 +57,9 @@ export function RoundActiveScreen() {
             Now describing
           </p>
           <p className="font-display text-2xl" style={{ color: holderColor }}>
-            {holder.name}
+            {describer ?? holderTeam}
           </p>
+          {describer ? <p className="text-sm font-bold text-muted">{holderTeam}</p> : null}
         </div>
 
         <div className="flex flex-1 items-center justify-center px-4 py-3">
@@ -89,10 +92,10 @@ export function RoundActiveScreen() {
             <span className="flex items-center gap-2 rounded-full bg-black/15 px-3 py-1 text-base font-extrabold">
               Pass to
               <span
-                className="rounded-full bg-[#120d26] px-2.5 py-0.5"
+                className="max-w-[11rem] truncate rounded-full bg-[#120d26] px-2.5 py-0.5"
                 style={{ color: nextColor }}
               >
-                {state.competitors[nextIndex].name}
+                {nextPlayer ?? nextTeam}
               </span>
               →
             </span>

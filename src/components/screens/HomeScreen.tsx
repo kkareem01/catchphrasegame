@@ -3,23 +3,16 @@
 import { useState, type ReactNode } from "react";
 import { BigButton } from "@/components/ui/BigButton";
 import { HowToPlayDialog } from "@/components/ui/HowToPlayDialog";
-import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { SettingsDialog } from "@/components/ui/SettingsDialog";
 import { useGame } from "@/hooks/useGame";
 import { useSetupPrefs } from "@/hooks/useSetupPrefs";
 import { gameAudio } from "@/lib/audio/gameAudio";
 import { getPhrasesForCategory } from "@/lib/data";
 import { createDeck } from "@/lib/game/deck";
-import { normalizeNames, toGameSettings } from "@/lib/game/setup";
-import type { GameMode } from "@/lib/game/types";
+import { normalizeNames, normalizeRosters, toGameSettings } from "@/lib/game/setup";
 import { CategoryPicker } from "./home/CategoryPicker";
-import { PlayerListEditor } from "./home/PlayerListEditor";
 import { TeamNamesEditor } from "./home/TeamNamesEditor";
-
-const MODE_OPTIONS: readonly Readonly<{ value: GameMode; label: string; hint: string }>[] = [
-  { value: "teams", label: "Teams", hint: "2 teams, any size" },
-  { value: "solo", label: "Free-for-all", hint: "3–10 players, odd OK" },
-];
+import { TeamPlayersEditor } from "./home/TeamPlayersEditor";
 
 type Sheet = "settings" | "help" | null;
 
@@ -27,23 +20,18 @@ export function HomeScreen() {
   const { dispatch } = useGame();
   const [prefs, updatePrefs] = useSetupPrefs();
   const [sheet, setSheet] = useState<Sheet>(null);
-  const isTeams = prefs.mode === "teams";
 
   const startGame = () => {
     // Belt and braces: the document-level listener also unlocks on this tap.
     gameAudio.unlock();
-    const names = isTeams ? prefs.teamNames : prefs.playerNames;
     dispatch({
       type: "START_GAME",
-      names: normalizeNames(prefs.mode, names),
+      names: normalizeNames(prefs.teamNames),
+      rosters: normalizeRosters(prefs.teamPlayers),
       deck: createDeck(getPhrasesForCategory(prefs.categoryId), Math.random),
       settings: toGameSettings(prefs),
     });
   };
-
-  const rulesSummary = isTeams
-    ? `First to ${prefs.targetScore} · Steal ${prefs.stealRuleEnabled ? "on" : "off"}`
-    : `${prefs.strikeLimit} strikes and you're out`;
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 pt-[max(env(safe-area-inset-top),1.25rem)]">
@@ -66,25 +54,17 @@ export function HomeScreen() {
       </header>
 
       <div className="flex flex-col gap-6 pb-6">
-        <Section title="Who's playing?">
-          <SegmentedControl
-            label="Game mode"
-            options={MODE_OPTIONS}
-            value={prefs.mode}
-            onChange={(mode) => updatePrefs({ mode })}
+        <Section title="Teams">
+          <TeamNamesEditor
+            names={prefs.teamNames}
+            onChange={(teamNames) => updatePrefs({ teamNames })}
           />
           <div className="mt-3">
-            {isTeams ? (
-              <TeamNamesEditor
-                names={prefs.teamNames}
-                onChange={(teamNames) => updatePrefs({ teamNames })}
-              />
-            ) : (
-              <PlayerListEditor
-                names={prefs.playerNames}
-                onChange={(playerNames) => updatePrefs({ playerNames })}
-              />
-            )}
+            <TeamPlayersEditor
+              teamNames={prefs.teamNames}
+              rosters={prefs.teamPlayers}
+              onChange={(teamPlayers) => updatePrefs({ teamPlayers })}
+            />
           </div>
         </Section>
 
@@ -105,7 +85,7 @@ export function HomeScreen() {
             Rules &amp; sound
           </span>
           <span className="text-right text-xs font-semibold text-muted">
-            {rulesSummary} ›
+            First to {prefs.targetScore} · Steal {prefs.stealRuleEnabled ? "on" : "off"} ›
           </span>
         </button>
       </div>
@@ -119,9 +99,7 @@ export function HomeScreen() {
       {sheet === "settings" ? (
         <SettingsDialog prefs={prefs} onChange={updatePrefs} onClose={() => setSheet(null)} />
       ) : null}
-      {sheet === "help" ? (
-        <HowToPlayDialog mode={prefs.mode} onClose={() => setSheet(null)} />
-      ) : null}
+      {sheet === "help" ? <HowToPlayDialog onClose={() => setSheet(null)} /> : null}
     </main>
   );
 }

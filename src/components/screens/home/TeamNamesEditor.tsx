@@ -1,6 +1,6 @@
 "use client";
 
-import { competitorColor, tint } from "@/components/ui/colors";
+import { teamColor, tint } from "@/components/ui/colors";
 import { MAX_NAME_LENGTH } from "@/lib/game/constants";
 
 export function TeamNamesEditor({
@@ -16,7 +16,7 @@ export function TeamNamesEditor({
   return (
     <div className="relative grid grid-cols-2 gap-3">
       {([0, 1] as const).map((index) => {
-        const color = competitorColor("teams", index);
+        const color = teamColor(index);
         return (
           <label
             key={index}

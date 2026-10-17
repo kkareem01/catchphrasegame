@@ -1,57 +1,47 @@
 import {
-  DEFAULT_PLAYER_PREFIX,
-  DEFAULT_STRIKE_LIMIT,
   DEFAULT_TARGET_SCORE,
   DEFAULT_TEAM_NAMES,
   DEFAULT_TEAM_PREFIX,
   MAX_NAME_LENGTH,
-  SOLO_MAX_PLAYERS,
-  SOLO_MIN_PLAYERS,
-  STRIKE_LIMIT_OPTIONS,
+  MAX_PLAYERS_PER_TEAM,
   TARGET_SCORE_OPTIONS,
 } from "./constants";
-import type { GameMode, GameSettings } from "./types";
+import type { GameSettings } from "./types";
+
+type Pair<T> = readonly [T, T];
 
 /** Everything the home screen lets players choose; persisted between visits. */
 export type SetupPrefs = Readonly<{
-  mode: GameMode;
-  teamNames: readonly [string, string];
-  playerNames: readonly string[];
+  teamNames: Pair<string>;
+  /** Optional player names per team (blank rows allowed while editing). */
+  teamPlayers: Pair<readonly string[]>;
   categoryId: string;
   stealRuleEnabled: boolean;
   targetScore: number;
-  strikeLimit: number;
 }>;
 
 export const DEFAULT_SETUP_PREFS: SetupPrefs = {
-  mode: "teams",
   teamNames: DEFAULT_TEAM_NAMES,
-  playerNames: Array.from({ length: SOLO_MIN_PLAYERS }, () => ""),
+  teamPlayers: [[], []],
   categoryId: "everything",
   stealRuleEnabled: false,
   targetScore: DEFAULT_TARGET_SCORE,
-  strikeLimit: DEFAULT_STRIKE_LIMIT,
 };
 
-export const isValidRoster = (mode: GameMode, count: number): boolean =>
-  mode === "teams"
-    ? count === 2
-    : count >= SOLO_MIN_PLAYERS && count <= SOLO_MAX_PLAYERS;
+/** Trims team names; blanks become "Team 1" / "Team 2". */
+export const normalizeNames = (names: readonly string[]): readonly string[] =>
+  names.map((name, index) => name.trim() || `${DEFAULT_TEAM_PREFIX} ${index + 1}`);
 
-/** Trims names; blanks become "Team 2" / "Player 3" by seat number. */
-export const normalizeNames = (
-  mode: GameMode,
-  names: readonly string[],
-): readonly string[] => {
-  const prefix = mode === "teams" ? DEFAULT_TEAM_PREFIX : DEFAULT_PLAYER_PREFIX;
-  return names.map((name, index) => name.trim() || `${prefix} ${index + 1}`);
-};
+/** Trims player names and drops blank rows. */
+export const normalizeRosters = (
+  rosters: readonly (readonly string[])[],
+): readonly (readonly string[])[] =>
+  rosters.map((players) => players.map((p) => p.trim()).filter((p) => p !== ""));
 
 export const toGameSettings = (prefs: SetupPrefs): GameSettings => ({
-  mode: prefs.mode,
   categoryId: prefs.categoryId,
-  stealRuleEnabled: prefs.mode === "teams" && prefs.stealRuleEnabled,
-  targetScore: prefs.mode === "teams" ? prefs.targetScore : prefs.strikeLimit,
+  stealRuleEnabled: prefs.stealRuleEnabled,
+  targetScore: prefs.targetScore,
 });
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -62,12 +52,27 @@ const parseNames = (value: unknown): readonly string[] | null =>
     ? value.map((v: string) => v.slice(0, MAX_NAME_LENGTH))
     : null;
 
+const parsePair = <T>(
+  value: unknown,
+  parseItem: (item: unknown) => T | null,
+): Pair<T> | null => {
+  if (!Array.isArray(value) || value.length !== 2) return null;
+  const [a, b] = value.map(parseItem);
+  return a !== null && b !== null ? [a, b] : null;
+};
+
+const parseRoster = (value: unknown): readonly string[] | null => {
+  const names = parseNames(value);
+  return names && names.length <= MAX_PLAYERS_PER_TEAM ? names : null;
+};
+
 const pick = <T>(value: unknown, allowed: readonly T[], fallback: T): T =>
   allowed.includes(value as T) ? (value as T) : fallback;
 
 /**
  * Validates untrusted saved prefs (localStorage). Each field falls back to
- * its default on its own, so one bad value never wipes the rest.
+ * its default on its own, so one bad value never wipes the rest. Fields
+ * from older versions (e.g. free-for-all) are ignored.
  */
 export const parseSetupPrefs = (
   raw: unknown,
@@ -75,22 +80,17 @@ export const parseSetupPrefs = (
 ): SetupPrefs => {
   if (!isRecord(raw)) return DEFAULT_SETUP_PREFS;
   const d = DEFAULT_SETUP_PREFS;
-  const teamNames = parseNames(raw.teamNames);
-  const playerNames = parseNames(raw.playerNames);
+  const teamNamePair = parsePair(raw.teamNames, (v) =>
+    typeof v === "string" ? v.slice(0, MAX_NAME_LENGTH) : null,
+  );
   return {
-    mode: pick<GameMode>(raw.mode, ["teams", "solo"], d.mode),
-    teamNames:
-      teamNames?.length === 2 ? [teamNames[0], teamNames[1]] : d.teamNames,
-    playerNames:
-      playerNames && isValidRoster("solo", playerNames.length)
-        ? playerNames
-        : d.playerNames,
+    teamNames: teamNamePair ?? d.teamNames,
+    teamPlayers: parsePair(raw.teamPlayers, parseRoster) ?? d.teamPlayers,
     categoryId: pick(raw.categoryId, categoryIds, d.categoryId),
     stealRuleEnabled:
       typeof raw.stealRuleEnabled === "boolean"
         ? raw.stealRuleEnabled
         : d.stealRuleEnabled,
     targetScore: pick(raw.targetScore, TARGET_SCORE_OPTIONS, d.targetScore),
-    strikeLimit: pick(raw.strikeLimit, STRIKE_LIMIT_OPTIONS, d.strikeLimit),
   };
 };

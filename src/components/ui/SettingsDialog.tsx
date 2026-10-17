@@ -1,14 +1,16 @@
 "use client";
 
 import { gameAudio } from "@/lib/audio/gameAudio";
-import { STRIKE_LIMIT_OPTIONS, TARGET_SCORE_OPTIONS } from "@/lib/game/constants";
+import { TARGET_SCORE_OPTIONS } from "@/lib/game/constants";
 import type { SetupPrefs } from "@/lib/game/setup";
 import { BigButton } from "./BigButton";
 import { Modal } from "./Modal";
 import { SegmentedControl } from "./SegmentedControl";
 
-const toOptions = (values: readonly number[]) =>
-  values.map((value) => ({ value, label: String(value) }));
+const POINT_OPTIONS = TARGET_SCORE_OPTIONS.map((value) => ({
+  value,
+  label: String(value),
+}));
 
 /** Game-rule settings + a sound check, opened from the home screen. */
 export function SettingsDialog({
@@ -20,47 +22,32 @@ export function SettingsDialog({
   onChange: (patch: Partial<SetupPrefs>) => void;
   onClose: () => void;
 }>) {
-  const isTeams = prefs.mode === "teams";
-
   return (
     <Modal title="Settings" onDismiss={onClose}>
       <section className="mt-5">
-        <p className="mb-2 text-sm font-bold text-muted">
-          {isTeams ? "Points to win" : "Strikes and you're out"}
-        </p>
-        {isTeams ? (
-          <SegmentedControl
-            label="Points to win"
-            options={toOptions(TARGET_SCORE_OPTIONS)}
-            value={prefs.targetScore}
-            onChange={(targetScore) => onChange({ targetScore })}
-          />
-        ) : (
-          <SegmentedControl
-            label="Strikes to lose"
-            options={toOptions(STRIKE_LIMIT_OPTIONS)}
-            value={prefs.strikeLimit}
-            onChange={(strikeLimit) => onChange({ strikeLimit })}
-          />
-        )}
+        <p className="mb-2 text-sm font-bold text-muted">Points to win</p>
+        <SegmentedControl
+          label="Points to win"
+          options={POINT_OPTIONS}
+          value={prefs.targetScore}
+          onChange={(targetScore) => onChange({ targetScore })}
+        />
       </section>
 
-      {isTeams ? (
-        <label className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-line bg-black/25 px-4 py-3.5">
-          <span>
-            <span className="font-bold">Steal rule</span>
-            <span className="block text-sm text-muted">
-              After the buzzer, the other team can guess the last phrase for +2
-            </span>
+      <label className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-line bg-black/25 px-4 py-3.5">
+        <span>
+          <span className="font-bold">Steal rule</span>
+          <span className="block text-sm text-muted">
+            After the buzzer, the other team can guess the last phrase for +2
           </span>
-          <input
-            type="checkbox"
-            checked={prefs.stealRuleEnabled}
-            onChange={(e) => onChange({ stealRuleEnabled: e.target.checked })}
-            className="h-7 w-7 shrink-0 accent-[color:var(--accent)]"
-          />
-        </label>
-      ) : null}
+        </span>
+        <input
+          type="checkbox"
+          checked={prefs.stealRuleEnabled}
+          onChange={(e) => onChange({ stealRuleEnabled: e.target.checked })}
+          className="h-7 w-7 shrink-0 accent-[color:var(--accent)]"
+        />
+      </label>
 
       <section className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-line bg-black/25 px-4 py-3.5">
         <span>

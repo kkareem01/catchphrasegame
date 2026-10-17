@@ -1,28 +1,28 @@
 # Catch Phrase 🎉
 
-A pass-and-play party game for the browser. One phone, two teams (or a
-free-for-all for any number of players), a hidden timer, and a buzzer nobody
-wants to be holding.
+A pass-and-play party game for the browser. One phone, two teams, a hidden
+timer, and a buzzer nobody wants to be holding.
 
 **Stack:** Next.js (App Router) · TypeScript · Tailwind CSS · installable PWA
 (works offline). Pure client-side — no backend.
 
 ## How to Play
 
-1. Pick **Teams** or **Free-for-all**, enter names, choose a category (or
-   **Everything** for a random mix) and tap **Start Game**. Your setup is
-   remembered for next time.
-2. The phone holder describes the phrase on screen **without saying any word
-   in it**.
-3. When someone gets it, tap **Got it!** — the screen tells you who to pass
-   to. Beeps speed up (and rise in pitch) as the hidden timer runs out.
-4. When the buzzer blows:
-   - **Teams:** the team **not** holding the phone scores. First to **7**
-     (configurable) wins.
-   - **Free-for-all** (3–10 players — any odd or even count): whoever is
-     caught holding the phone takes a strike. Hit the strike limit and you're
-     out; fewest strikes wins.
-5. **Rematch** keeps the same players and settings.
+1. Name your teams, choose a category (or **Everything** for a random mix)
+   and tap **Start Game**. Your setup is remembered for next time.
+2. Sit so the teams alternate around the circle. The phone holder describes
+   the phrase on screen **without saying any word in it**; only their
+   teammates can guess.
+3. When their team gets it, tap **Got it!** and hand the phone to the other
+   team. Beeps speed up (and rise in pitch) as the hidden timer runs out.
+4. When the buzzer blows, the team **not** holding the phone scores. First
+   to **7** (configurable) wins. **Rematch** keeps the same teams.
+
+**Odd number of players?** Make uneven teams (e.g. 3 vs 2) and tap **Add
+player names**. The game then names who gets the phone next — always the next
+player on the *other* team — so teammates never pass to each other (which
+would let them see the next phrase). The smaller team just gets the phone
+more often.
 
 **Optional steal rule** (Teams, in Rules & sound): after the buzzer, the
 non-holding team may guess the final phrase for a bonus point (+2 instead
@@ -44,8 +44,8 @@ npm run build          # production build (webpack — required by Serwist)
 
 - **Game logic is pure.** `src/lib/game/reducer.ts` is an immutable state
   machine with no browser APIs; randomness is injected, so everything is
-  deterministic under test. Teams and free-for-all share one model: a list
-  of competitors and a `holder` index that walks round the circle.
+  deterministic under test. Optional per-team rosters plus a rotation
+  index pick who describes next, always alternating teams.
 - **Audio heals itself.** `src/lib/audio/audioEngine.ts` owns the
   AudioContext and is re-checked on every tap (`useAudioUnlock`): a context
   that iOS interrupted, closed, froze, or left as a silent "zombie" after
