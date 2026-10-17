@@ -7,10 +7,6 @@ export const nextHolderIndex = (state: GameState): number =>
 /** The team that scores when the buzzer catches `holder`. */
 export const otherTeamIndex = (holder: number): number => (holder === 0 ? 1 : 0);
 
-/** The listed player who describes next for `team`, or null if none listed. */
-export const describerOf = (state: GameState, team: number): string | null =>
-  state.rosters[team]?.[state.rotation[team]] ?? null;
-
 /** In roundEnd with the steal rule on, the point is not yet awarded. */
 export const isStealPending = (state: GameState): boolean =>
   state.phase === "roundEnd" &&

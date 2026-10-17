@@ -18,11 +18,9 @@ timer, and a buzzer nobody wants to be holding.
 4. When the buzzer blows, the team **not** holding the phone scores. First
    to **7** (configurable) wins. **Rematch** keeps the same teams.
 
-**Odd number of players?** Make uneven teams (e.g. 3 vs 2) and tap **Add
-player names**. The game then names who gets the phone next — always the next
-player on the *other* team — so teammates never pass to each other (which
-would let them see the next phrase). The smaller team just gets the phone
-more often.
+**Odd number of players?** Just play — nobody needs to move. Somewhere two
+teammates will sit side by side; when the phone passes between them, the
+passer sits out guessing that one phrase.
 
 **Optional steal rule** (Teams, in Rules & sound): after the buzzer, the
 non-holding team may guess the final phrase for a bonus point (+2 instead
@@ -44,8 +42,8 @@ npm run build          # production build (webpack — required by Serwist)
 
 - **Game logic is pure.** `src/lib/game/reducer.ts` is an immutable state
   machine with no browser APIs; randomness is injected, so everything is
-  deterministic under test. Optional per-team rosters plus a rotation
-  index pick who describes next, always alternating teams.
+  deterministic under test. The phone always alternates between the two
+  teams; `holder` is the team holding it.
 - **Audio heals itself.** `src/lib/audio/audioEngine.ts` owns the
   AudioContext and is re-checked on every tap (`useAudioUnlock`): a context
   that iOS interrupted, closed, froze, or left as a silent "zombie" after

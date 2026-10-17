@@ -4,9 +4,6 @@ export const TARGET_SCORE_OPTIONS: readonly number[] = [3, 5, 7, 10];
 /** Default winning score (classic Catch Phrase). */
 export const DEFAULT_TARGET_SCORE = 7;
 
-/** Most player names each team can list. */
-export const MAX_PLAYERS_PER_TEAM = 10;
-
 /** Longest team/player name accepted from the setup screen or storage. */
 export const MAX_NAME_LENGTH = 14;
 

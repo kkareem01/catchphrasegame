@@ -9,7 +9,7 @@ const STEPS: readonly string[] = [
   "When your team gets it, tap Got it! and hand the phone to the other team. Stuck? Skip.",
   "Beeps speed up as the hidden timer runs out. Nobody knows when it'll blow.",
   "When the buzzer goes, the team NOT holding the phone scores a point.",
-  "Odd number of players? Make uneven teams and add player names — the game tells you who to pass to, always someone on the other team.",
+  "Odd number of players? Just play — somewhere two teammates will sit side by side. When the phone passes between them, the passer sits out guessing that one phrase.",
 ];
 
 export function HowToPlayDialog({ onClose }: Readonly<{ onClose: () => void }>) {

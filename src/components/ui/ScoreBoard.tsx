@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import { useGame } from "@/hooks/useGame";
-import { describerOf } from "@/lib/game/selectors";
 import { teamColor, tint } from "./colors";
 import { ConfirmDialog } from "./ConfirmDialog";
 
 /**
  * In-game header: both team scores, the target, and an End Game control.
- * `showHolder` highlights the team (and listed player) holding the phone.
+ * `showHolder` highlights the team holding the phone.
  */
 export function ScoreBoard({
   showHolder = false,
@@ -35,7 +34,6 @@ export function ScoreBoard({
           {state.competitors.map((team, index) => {
             const color = teamColor(index);
             const holding = showHolder && state.holder === index;
-            const player = describerOf(state, index);
             return (
               <div
                 key={index}
@@ -52,7 +50,7 @@ export function ScoreBoard({
                   {team.name}
                   {holding ? (
                     <span className="block truncate text-[0.65rem] text-muted">
-                      🎤 {player ?? "has it"}
+                      🎤 has it
                     </span>
                   ) : null}
                 </span>

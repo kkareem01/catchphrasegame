@@ -3,7 +3,6 @@ import {
   DEFAULT_TEAM_NAMES,
   DEFAULT_TEAM_PREFIX,
   MAX_NAME_LENGTH,
-  MAX_PLAYERS_PER_TEAM,
   TARGET_SCORE_OPTIONS,
 } from "./constants";
 import type { GameSettings } from "./types";
@@ -13,8 +12,6 @@ type Pair<T> = readonly [T, T];
 /** Everything the home screen lets players choose; persisted between visits. */
 export type SetupPrefs = Readonly<{
   teamNames: Pair<string>;
-  /** Optional player names per team (blank rows allowed while editing). */
-  teamPlayers: Pair<readonly string[]>;
   categoryId: string;
   stealRuleEnabled: boolean;
   targetScore: number;
@@ -22,7 +19,6 @@ export type SetupPrefs = Readonly<{
 
 export const DEFAULT_SETUP_PREFS: SetupPrefs = {
   teamNames: DEFAULT_TEAM_NAMES,
-  teamPlayers: [[], []],
   categoryId: "everything",
   stealRuleEnabled: false,
   targetScore: DEFAULT_TARGET_SCORE,
@@ -31,12 +27,6 @@ export const DEFAULT_SETUP_PREFS: SetupPrefs = {
 /** Trims team names; blanks become "Team 1" / "Team 2". */
 export const normalizeNames = (names: readonly string[]): readonly string[] =>
   names.map((name, index) => name.trim() || `${DEFAULT_TEAM_PREFIX} ${index + 1}`);
-
-/** Trims player names and drops blank rows. */
-export const normalizeRosters = (
-  rosters: readonly (readonly string[])[],
-): readonly (readonly string[])[] =>
-  rosters.map((players) => players.map((p) => p.trim()).filter((p) => p !== ""));
 
 export const toGameSettings = (prefs: SetupPrefs): GameSettings => ({
   categoryId: prefs.categoryId,
@@ -47,11 +37,6 @@ export const toGameSettings = (prefs: SetupPrefs): GameSettings => ({
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-const parseNames = (value: unknown): readonly string[] | null =>
-  Array.isArray(value) && value.every((v) => typeof v === "string")
-    ? value.map((v: string) => v.slice(0, MAX_NAME_LENGTH))
-    : null;
-
 const parsePair = <T>(
   value: unknown,
   parseItem: (item: unknown) => T | null,
@@ -61,18 +46,13 @@ const parsePair = <T>(
   return a !== null && b !== null ? [a, b] : null;
 };
 
-const parseRoster = (value: unknown): readonly string[] | null => {
-  const names = parseNames(value);
-  return names && names.length <= MAX_PLAYERS_PER_TEAM ? names : null;
-};
-
 const pick = <T>(value: unknown, allowed: readonly T[], fallback: T): T =>
   allowed.includes(value as T) ? (value as T) : fallback;
 
 /**
  * Validates untrusted saved prefs (localStorage). Each field falls back to
  * its default on its own, so one bad value never wipes the rest. Fields
- * from older versions (e.g. free-for-all) are ignored.
+ * from older versions (free-for-all, player rosters) are ignored.
  */
 export const parseSetupPrefs = (
   raw: unknown,
@@ -85,7 +65,6 @@ export const parseSetupPrefs = (
   );
   return {
     teamNames: teamNamePair ?? d.teamNames,
-    teamPlayers: parsePair(raw.teamPlayers, parseRoster) ?? d.teamPlayers,
     categoryId: pick(raw.categoryId, categoryIds, d.categoryId),
     stealRuleEnabled:
       typeof raw.stealRuleEnabled === "boolean"

@@ -7,7 +7,7 @@ import { ScoreBoard } from "@/components/ui/ScoreBoard";
 import { useGame } from "@/hooks/useGame";
 import { useVibration } from "@/hooks/useVibration";
 import { BUZZER_VIBRATION_PATTERN } from "@/lib/game/constants";
-import { describerOf, isStealPending, otherTeamIndex } from "@/lib/game/selectors";
+import { isStealPending, otherTeamIndex } from "@/lib/game/selectors";
 import type { GameState } from "@/lib/game/types";
 
 /**
@@ -21,7 +21,6 @@ export function RoundEndScreen() {
   const vibrate = useVibration();
   const [armed, setArmed] = useState(false);
   const caughtTeam = state.competitors[state.holder].name;
-  const caughtPlayer = describerOf(state, state.holder);
   const stealPending = isStealPending(state);
 
   useEffect(() => {
@@ -48,7 +47,7 @@ export function RoundEndScreen() {
           <p className="text-lg">
             Caught holding it:{" "}
             <span className="font-extrabold" style={{ color: teamColor(state.holder) }}>
-              {caughtPlayer ? `${caughtPlayer} (${caughtTeam})` : caughtTeam}
+              {caughtTeam}
             </span>
           </p>
 
@@ -89,7 +88,7 @@ export function RoundEndScreen() {
               className="flex flex-col items-center py-5"
             >
               <span className="font-display text-2xl">Next round</span>
-              <span className="text-sm font-bold opacity-75">{caughtPlayer ?? caughtTeam} starts</span>
+              <span className="text-sm font-bold opacity-75">{caughtTeam} starts</span>
             </BigButton>
           )}
         </div>

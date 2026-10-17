@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createInitialState, gameReducer } from "./reducer";
-import {
-  describerOf,
-  getWinners,
-  isStealPending,
-  nextHolderIndex,
-} from "./selectors";
+import { getWinners, isStealPending, nextHolderIndex } from "./selectors";
 import type { GameSettings, GameState } from "./types";
 
 const settings = (overrides: Partial<GameSettings> = {}): GameSettings => ({
@@ -15,14 +10,10 @@ const settings = (overrides: Partial<GameSettings> = {}): GameSettings => ({
   ...overrides,
 });
 
-const started = (
-  s: GameSettings = settings(),
-  rosters?: readonly (readonly string[])[],
-): GameState =>
+const started = (s: GameSettings = settings()): GameState =>
   gameReducer(createInitialState(), {
     type: "START_GAME",
     names: ["A", "B"],
-    rosters,
     deck: { remaining: ["a", "b", "c"], used: [] },
     settings: s,
   });
@@ -37,21 +28,6 @@ describe("nextHolderIndex", () => {
     const state = started();
     expect(nextHolderIndex(state)).toBe(1);
     expect(nextHolderIndex({ ...state, holder: 1 })).toBe(0);
-  });
-});
-
-describe("describerOf", () => {
-  it("names the team's player who is up", () => {
-    const state = started(settings(), [["Ann", "Cy"], ["Bo"]]);
-    expect(describerOf(state, 0)).toBe("Ann");
-    expect(describerOf(state, 1)).toBe("Bo");
-    const passed = gameReducer(state, { type: "CORRECT" });
-    expect(describerOf(passed, 0)).toBe("Cy");
-  });
-
-  it("is null for a team without listed players", () => {
-    expect(describerOf(started(settings(), [["Ann"], []]), 1)).toBeNull();
-    expect(describerOf(started(), 0)).toBeNull();
   });
 });
 

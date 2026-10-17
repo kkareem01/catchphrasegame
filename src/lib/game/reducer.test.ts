@@ -202,7 +202,7 @@ describe("illegal events are no-ops", () => {
   });
 });
 
-describe("START_GAME roster validation", () => {
+describe("START_GAME validation", () => {
   it("rejects a game without exactly two team names", () => {
     const setup = createInitialState();
     const state = gameReducer(setup, {
@@ -255,86 +255,3 @@ describe("REMATCH", () => {
   });
 });
 
-describe("player rosters (optional, any team sizes)", () => {
-  // 3 vs 2: the classic odd-number game.
-  const ROSTERS = [["Ann", "Cy", "Eve"], ["Bo", "Di"]] as const;
-  const rosterGame = (rosters: readonly (readonly string[])[] = ROSTERS): GameState =>
-    gameReducer(createInitialState(), {
-      type: "START_GAME",
-      names: ["Reds", "Blues"],
-      rosters,
-      deck: deckOf("a", "b", "c", "d", "e", "f", "g", "h"),
-      settings: SETTINGS,
-    });
-  const correct = (state: GameState, times: number): GameState =>
-    Array.from({ length: times }).reduce<GameState>(
-      (s) => gameReducer(s, { type: "CORRECT" }),
-      state,
-    );
-
-  it("starts with every team's first player up", () => {
-    const state = rosterGame();
-    expect(state.rosters).toEqual(ROSTERS);
-    expect(state.rotation).toEqual([0, 0]);
-  });
-
-  it("rotates each team's describer after they pass the phone", () => {
-    // Ann → Bo → Cy → Di → Eve → Bo → Ann …
-    const describers = Array.from({ length: 7 }, (_, i) => {
-      const s = correct(rosterGame(), i);
-      return s.rosters[s.holder][s.rotation[s.holder]];
-    });
-    expect(describers).toEqual(["Ann", "Bo", "Cy", "Di", "Eve", "Bo", "Ann"]);
-  });
-
-  it("always hands the phone to the other team", () => {
-    const holders = Array.from({ length: 6 }, (_, i) => correct(rosterGame(), i).holder);
-    expect(holders).toEqual([0, 1, 0, 1, 0, 1]);
-  });
-
-  it("does not rotate on a skip", () => {
-    const state = gameReducer(rosterGame(), { type: "SKIP" });
-    expect(state.rotation).toEqual([0, 0]);
-  });
-
-  it("lets the caught player start the next round", () => {
-    const passed = correct(rosterGame(), 3); // Di (Blues) holding
-    const next = gameReducer(gameReducer(passed, { type: "BUZZER" }), {
-      type: "START_NEXT_ROUND",
-    });
-    expect(next.holder).toBe(1);
-    expect(next.rosters[1][next.rotation[1]]).toBe("Di");
-  });
-
-  it("works with players listed for only one team", () => {
-    const state = correct(rosterGame([["Ann", "Cy"], []]), 2);
-    expect(state.rosters[1]).toEqual([]);
-    expect(state.rotation).toEqual([1, 0]);
-  });
-
-  it("defaults to no rosters", () => {
-    expect(startedGame().rosters).toEqual([[], []]);
-  });
-
-  it("rejects rosters that don't match the two teams", () => {
-    const setup = createInitialState();
-    const state = gameReducer(setup, {
-      type: "START_GAME",
-      names: ["Reds", "Blues"],
-      rosters: [["Ann"]],
-      deck: deckOf("a"),
-      settings: SETTINGS,
-    });
-    expect(state).toBe(setup);
-  });
-
-  it("rematch keeps the rosters and starts each team from its first player", () => {
-    // Blues are holding after 3 passes, so the buzzer gives Reds the win.
-    const nearWin = withScores(correct(rosterGame(), 3), [TARGET - 1, 0]);
-    const over = gameReducer(nearWin, { type: "BUZZER" });
-    expect(over.phase).toBe("gameOver");
-    const again = gameReducer(over, { type: "REMATCH" });
-    expect(again.rosters).toEqual(ROSTERS);
-    expect(again.rotation).toEqual([0, 0]);
-  });
-});

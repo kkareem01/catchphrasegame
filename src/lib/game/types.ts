@@ -24,14 +24,6 @@ export type GameState = Readonly<{
   competitors: readonly Competitor[];
   /** Index of the team holding the phone. */
   holder: number;
-  /**
-   * Optional player names per team (either list may be empty). Lets uneven
-   * teams play fairly: the app names who gets the phone next, always someone
-   * on the other team.
-   */
-  rosters: readonly (readonly string[])[];
-  /** Per team: index into its roster of the player who describes next. */
-  rotation: readonly number[];
   deck: Deck;
   currentPhrase: string | null;
   settings: GameSettings;
@@ -46,8 +38,6 @@ export type GameEvent =
   | Readonly<{
       type: "START_GAME";
       names: readonly string[];
-      /** Player names per team; omit to play with team names only. */
-      rosters?: readonly (readonly string[])[];
       deck: Deck;
       settings: GameSettings;
     }>

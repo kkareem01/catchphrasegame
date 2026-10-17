@@ -7,8 +7,6 @@ export const createInitialState = (): GameState => ({
   phase: "setup",
   competitors: DEFAULT_TEAM_NAMES.map((name) => ({ name, score: 0 })),
   holder: 0,
-  rosters: [[], []],
-  rotation: [0, 0],
   deck: { remaining: [], used: [] },
   currentPhrase: null,
   settings: {
@@ -40,18 +38,10 @@ const addScore = (
 
 const TEAM_COUNT = 2;
 
-/** Moves `team`'s rotation on to its next listed player (no-op if none). */
-const advanceRotation = (state: GameState, team: number): readonly number[] =>
-  state.rotation.map((index, t) => {
-    const size = state.rosters[t].length;
-    return t === team && size > 0 ? (index + 1) % size : index;
-  });
-
 /** First round of a game: scores zeroed, team 1 holding, phrase drawn. */
 const beginGame = (
   state: GameState,
   names: readonly string[],
-  rosters: readonly (readonly string[])[],
   rng: Rng,
 ): GameState => {
   const { deck, phrase } = drawPhrase(state.deck, rng);
@@ -60,8 +50,6 @@ const beginGame = (
     phase: "roundActive",
     competitors: names.map((name) => ({ name, score: 0 })),
     holder: 0,
-    rosters,
-    rotation: rosters.map(() => 0),
     deck,
     currentPhrase: phrase,
     lastScorer: null,
@@ -81,19 +69,16 @@ export const gameReducer = (
   switch (event.type) {
     case "START_GAME": {
       const deckSize = event.deck.remaining.length + event.deck.used.length;
-      const rosters = event.rosters ?? [[], []];
       if (
         state.phase !== "setup" ||
         deckSize === 0 ||
-        event.names.length !== TEAM_COUNT ||
-        rosters.length !== TEAM_COUNT
+        event.names.length !== TEAM_COUNT
       ) {
         return state;
       }
       return beginGame(
         { ...state, deck: event.deck, settings: event.settings },
         event.names,
-        rosters,
         rng,
       );
     }
@@ -104,8 +89,6 @@ export const gameReducer = (
       return {
         ...state,
         holder: nextHolderIndex(state),
-        // The describer is done; their team's next turn goes to the next player.
-        rotation: advanceRotation(state, state.holder),
         deck,
         currentPhrase: phrase,
       };
@@ -150,7 +133,6 @@ export const gameReducer = (
       return beginGame(
         state,
         state.competitors.map((c) => c.name),
-        state.rosters,
         rng,
       );
     }

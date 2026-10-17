@@ -9,10 +9,9 @@ import { useSetupPrefs } from "@/hooks/useSetupPrefs";
 import { gameAudio } from "@/lib/audio/gameAudio";
 import { getPhrasesForCategory } from "@/lib/data";
 import { createDeck } from "@/lib/game/deck";
-import { normalizeNames, normalizeRosters, toGameSettings } from "@/lib/game/setup";
+import { normalizeNames, toGameSettings } from "@/lib/game/setup";
 import { CategoryPicker } from "./home/CategoryPicker";
 import { TeamNamesEditor } from "./home/TeamNamesEditor";
-import { TeamPlayersEditor } from "./home/TeamPlayersEditor";
 
 type Sheet = "settings" | "help" | null;
 
@@ -27,7 +26,6 @@ export function HomeScreen() {
     dispatch({
       type: "START_GAME",
       names: normalizeNames(prefs.teamNames),
-      rosters: normalizeRosters(prefs.teamPlayers),
       deck: createDeck(getPhrasesForCategory(prefs.categoryId), Math.random),
       settings: toGameSettings(prefs),
     });
@@ -59,13 +57,6 @@ export function HomeScreen() {
             names={prefs.teamNames}
             onChange={(teamNames) => updatePrefs({ teamNames })}
           />
-          <div className="mt-3">
-            <TeamPlayersEditor
-              teamNames={prefs.teamNames}
-              rosters={prefs.teamPlayers}
-              onChange={(teamPlayers) => updatePrefs({ teamPlayers })}
-            />
-          </div>
         </Section>
 
         <Section title="Category">
