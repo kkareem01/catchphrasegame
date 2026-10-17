@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { COOP_SKIPS_PER_ROUND, DEFAULT_TARGET_SCORE } from "./constants";
+import { DEFAULT_TARGET_SCORE } from "./constants";
 import { createInitialState, gameReducer } from "./reducer";
-import type { Deck, GameEvent, GameSettings, GameState } from "./types";
+import type { Deck, GameSettings, GameState } from "./types";
 
 const TARGET = DEFAULT_TARGET_SCORE;
 const SETTINGS: GameSettings = {
@@ -321,107 +321,5 @@ describe("REMATCH", () => {
   it("is ignored outside gameOver", () => {
     const active = startedGame();
     expect(gameReducer(active, { type: "REMATCH" })).toBe(active);
-  });
-});
-
-describe("co-op (Beat the Bomb) mode", () => {
-  const COOP_SETTINGS: GameSettings = { ...SETTINGS, mode: "coop", targetScore: 2 };
-  const coopGame = (previousBest = 0): GameState =>
-    gameReducer(createInitialState(), {
-      type: "START_GAME",
-      names: ["Ann", "Bo"],
-      deck: deckOf("one", "two", "three", "four", "five"),
-      settings: COOP_SETTINGS,
-      previousBest,
-    });
-  const apply = (state: GameState, ...events: GameEvent[]): GameState =>
-    events.reduce((s, e) => gameReducer(s, e), state);
-
-  it("starts the first bomb with a zero score, full skips and the saved best", () => {
-    const state = coopGame(12);
-    expect(state.phase).toBe("roundActive");
-    expect(state.coop).toEqual({
-      roundScores: [0],
-      skipsLeft: COOP_SKIPS_PER_ROUND,
-      previousBest: 12,
-    });
-  });
-
-  it("accepts two players", () => {
-    expect(coopGame().competitors).toHaveLength(2);
-  });
-
-  it("other modes carry no co-op progress", () => {
-    expect(startedGame().coop).toBeNull();
-  });
-
-  it("counts each correct guess for the team and credits the describer", () => {
-    const state = apply(coopGame(), { type: "CORRECT" }, { type: "CORRECT" }, { type: "CORRECT" });
-    expect(state.coop?.roundScores).toEqual([3]);
-    expect(state.competitors.map((c) => c.score)).toEqual([2, 1]);
-    expect(state.holder).toBe(1);
-  });
-
-  it("limits skips per bomb", () => {
-    const skips = Array.from({ length: COOP_SKIPS_PER_ROUND }, (): GameEvent => ({ type: "SKIP" }));
-    const out = apply(coopGame(), ...skips);
-    expect(out.coop?.skipsLeft).toBe(0);
-    expect(gameReducer(out, { type: "SKIP" })).toBe(out);
-  });
-
-  it("explodes a bomb without scoring anyone, then arms the next one", () => {
-    const buzzed = apply(coopGame(), { type: "CORRECT" }, { type: "SKIP" }, { type: "BUZZER" });
-    expect(buzzed.phase).toBe("roundEnd");
-    expect(buzzed.lastScorer).toBeNull();
-    const next = gameReducer(buzzed, { type: "START_NEXT_ROUND" });
-    expect(next.phase).toBe("roundActive");
-    expect(next.coop?.roundScores).toEqual([1, 0]);
-    expect(next.coop?.skipsLeft).toBe(COOP_SKIPS_PER_ROUND);
-  });
-
-  it("ends the game when the last bomb explodes", () => {
-    const over = apply(
-      coopGame(),
-      { type: "CORRECT" },
-      { type: "BUZZER" },
-      { type: "START_NEXT_ROUND" },
-      { type: "CORRECT" },
-      { type: "CORRECT" },
-      { type: "BUZZER" },
-    );
-    expect(over.phase).toBe("gameOver");
-    expect(over.coop?.roundScores).toEqual([1, 2]);
-  });
-
-  it("ignores the steal rule", () => {
-    const buzzed = gameReducer(
-      gameReducer(createInitialState(), {
-        type: "START_GAME",
-        names: ["Ann", "Bo"],
-        deck: deckOf("one", "two"),
-        settings: { ...COOP_SETTINGS, stealRuleEnabled: true },
-      }),
-      { type: "BUZZER" },
-    );
-    expect(gameReducer(buzzed, { type: "START_NEXT_ROUND" }).phase).toBe("roundActive");
-  });
-
-  it("rematch resets progress and carries the new best forward", () => {
-    const over = apply(
-      coopGame(1),
-      { type: "CORRECT" },
-      { type: "CORRECT" },
-      { type: "BUZZER" },
-      { type: "START_NEXT_ROUND" },
-      { type: "CORRECT" },
-      { type: "BUZZER" },
-    );
-    const again = gameReducer(over, { type: "REMATCH" });
-    expect(again.coop).toEqual({
-      roundScores: [0],
-      skipsLeft: COOP_SKIPS_PER_ROUND,
-      previousBest: 3,
-    });
-    expect(again.competitors.every((c) => c.score === 0)).toBe(true);
   });
 });

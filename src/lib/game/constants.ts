@@ -12,19 +12,6 @@ export const DEFAULT_STRIKE_LIMIT = 3;
 export const SOLO_MIN_PLAYERS = 3;
 export const SOLO_MAX_PLAYERS = 10;
 
-/** Co-op "Beat the Bomb": everyone vs the timer. */
-export const COOP_MIN_PLAYERS = 2;
-export const COOP_MAX_PLAYERS = 10;
-/** Bombs (rounds) per game. */
-export const COOP_ROUND_OPTIONS: readonly number[] = [3, 5];
-export const DEFAULT_COOP_ROUNDS = 3;
-/** Skips allowed per bomb — unlimited skips would let you fish for easy ones. */
-export const COOP_SKIPS_PER_ROUND = 3;
-/** Each bomb's hidden timer is this much shorter than the last… */
-export const COOP_ROUND_SHRINK = 0.12;
-/** …but never below this fraction of the normal range. */
-export const COOP_MIN_DURATION_SCALE = 0.6;
-
 /** Longest team/player name accepted from the setup screen or storage. */
 export const MAX_NAME_LENGTH = 14;
 

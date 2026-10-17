@@ -6,39 +6,20 @@ import { HowToPlayDialog } from "@/components/ui/HowToPlayDialog";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { SettingsDialog } from "@/components/ui/SettingsDialog";
 import { useGame } from "@/hooks/useGame";
-import { useHighScore } from "@/hooks/useHighScore";
 import { useSetupPrefs } from "@/hooks/useSetupPrefs";
 import { gameAudio } from "@/lib/audio/gameAudio";
 import { getPhrasesForCategory } from "@/lib/data";
-import {
-  COOP_MAX_PLAYERS,
-  COOP_MIN_PLAYERS,
-  SOLO_MAX_PLAYERS,
-  SOLO_MIN_PLAYERS,
-} from "@/lib/game/constants";
 import { createDeck } from "@/lib/game/deck";
-import { normalizeNames, rosterFor, toGameSettings, type SetupPrefs } from "@/lib/game/setup";
+import { normalizeNames, toGameSettings } from "@/lib/game/setup";
 import type { GameMode } from "@/lib/game/types";
 import { CategoryPicker } from "./home/CategoryPicker";
 import { PlayerListEditor } from "./home/PlayerListEditor";
 import { TeamNamesEditor } from "./home/TeamNamesEditor";
 
 const MODE_OPTIONS: readonly Readonly<{ value: GameMode; label: string; hint: string }>[] = [
-  { value: "teams", label: "Teams", hint: "2 teams" },
-  { value: "solo", label: "Free-for-all", hint: "3–10, odd OK" },
-  { value: "coop", label: "Co-op 💣", hint: "Beat the Bomb" },
+  { value: "teams", label: "Teams", hint: "2 teams, any size" },
+  { value: "solo", label: "Free-for-all", hint: "3–10 players, odd OK" },
 ];
-
-const rulesSummary = (prefs: SetupPrefs, best: number): string => {
-  switch (prefs.mode) {
-    case "teams":
-      return `First to ${prefs.targetScore} · Steal ${prefs.stealRuleEnabled ? "on" : "off"}`;
-    case "solo":
-      return `${prefs.strikeLimit} strikes and you're out`;
-    case "coop":
-      return `${prefs.coopRounds} bombs${best > 0 ? ` · Best ${best}` : ""}`;
-  }
-};
 
 type Sheet = "settings" | "help" | null;
 
@@ -46,19 +27,23 @@ export function HomeScreen() {
   const { dispatch } = useGame();
   const [prefs, updatePrefs] = useSetupPrefs();
   const [sheet, setSheet] = useState<Sheet>(null);
-  const coopBest = useHighScore(prefs.categoryId, prefs.coopRounds);
+  const isTeams = prefs.mode === "teams";
 
   const startGame = () => {
     // Belt and braces: the document-level listener also unlocks on this tap.
     gameAudio.unlock();
+    const names = isTeams ? prefs.teamNames : prefs.playerNames;
     dispatch({
       type: "START_GAME",
-      names: normalizeNames(prefs.mode, rosterFor(prefs)),
+      names: normalizeNames(prefs.mode, names),
       deck: createDeck(getPhrasesForCategory(prefs.categoryId), Math.random),
       settings: toGameSettings(prefs),
-      previousBest: prefs.mode === "coop" ? coopBest : undefined,
     });
   };
+
+  const rulesSummary = isTeams
+    ? `First to ${prefs.targetScore} · Steal ${prefs.stealRuleEnabled ? "on" : "off"}`
+    : `${prefs.strikeLimit} strikes and you're out`;
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 pt-[max(env(safe-area-inset-top),1.25rem)]">
@@ -89,26 +74,15 @@ export function HomeScreen() {
             onChange={(mode) => updatePrefs({ mode })}
           />
           <div className="mt-3">
-            {prefs.mode === "teams" ? (
+            {isTeams ? (
               <TeamNamesEditor
                 names={prefs.teamNames}
                 onChange={(teamNames) => updatePrefs({ teamNames })}
               />
-            ) : prefs.mode === "solo" ? (
+            ) : (
               <PlayerListEditor
                 names={prefs.playerNames}
                 onChange={(playerNames) => updatePrefs({ playerNames })}
-                minPlayers={SOLO_MIN_PLAYERS}
-                maxPlayers={SOLO_MAX_PLAYERS}
-                hint="Sit in a circle in this order — the phone travels round to the next seat."
-              />
-            ) : (
-              <PlayerListEditor
-                names={prefs.coopNames}
-                onChange={(coopNames) => updatePrefs({ coopNames })}
-                minPlayers={COOP_MIN_PLAYERS}
-                maxPlayers={COOP_MAX_PLAYERS}
-                hint="Everyone's on the same team. Pass the phone round in this order and clear as many phrases as you can before each bomb blows."
               />
             )}
           </div>
@@ -131,7 +105,7 @@ export function HomeScreen() {
             Rules &amp; sound
           </span>
           <span className="text-right text-xs font-semibold text-muted">
-            {rulesSummary(prefs, coopBest)} ›
+            {rulesSummary} ›
           </span>
         </button>
       </div>

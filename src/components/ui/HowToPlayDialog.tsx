@@ -20,17 +20,6 @@ const MODE_STEPS: Record<GameMode, readonly string[]> = {
     "Everyone can guess. Whoever is caught holding the phone takes a strike 💣.",
     "Hit the strike limit and you're out — fewest strikes wins.",
   ],
-  coop: [
-    "Everyone's on the same team — 2 players or more. Take turns describing; everyone else guesses.",
-    "Every phrase you clear adds to your team score. Only 3 skips per bomb, so use them wisely.",
-    "When a bomb blows, the next one is armed — with a shorter fuse. After the last bomb, try to beat your best score.",
-  ],
-};
-
-const MODE_NAMES: Record<GameMode, string> = {
-  teams: "Teams",
-  solo: "Free-for-all",
-  coop: "Beat the Bomb (co-op)",
 };
 
 export function HowToPlayDialog({
@@ -41,7 +30,7 @@ export function HowToPlayDialog({
   return (
     <Modal title="How to play" onDismiss={onClose}>
       <p className="mt-1 text-center text-sm font-bold text-muted">
-        {MODE_NAMES[mode]}
+        {mode === "teams" ? "Teams" : "Free-for-all"}
       </p>
       <ol className="mt-4 flex flex-col gap-3">
         {steps.map((step, index) => (
