@@ -19,24 +19,15 @@ export function ConfirmDialog({
   onCancel: () => void;
 }>) {
   return (
-    <Modal onDismiss={onCancel}>
+    <Modal title={title} onDismiss={onCancel}>
       <div className="text-center">
-        <h3 className="text-2xl font-black">{title}</h3>
-        {message ? <p className="mt-2 text-sm opacity-70">{message}</p> : null}
-        <div className="mt-5 flex flex-col gap-3">
-          <BigButton
-            onClick={onConfirm}
-            variant="danger"
-            className="py-4 text-lg"
-          >
-            {confirmLabel}
-          </BigButton>
-          <BigButton
-            onClick={onCancel}
-            variant="secondary"
-            className="py-4 text-lg"
-          >
+        {message ? <p className="mt-2 text-muted">{message}</p> : null}
+        <div className="mt-6 flex flex-col gap-4">
+          <BigButton onClick={onCancel} className="py-4 text-lg">
             {cancelLabel}
+          </BigButton>
+          <BigButton onClick={onConfirm} variant="danger" className="py-4 text-lg">
+            {confirmLabel}
           </BigButton>
         </div>
       </div>

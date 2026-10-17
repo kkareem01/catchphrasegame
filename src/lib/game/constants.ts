@@ -4,6 +4,17 @@ export const TARGET_SCORE_OPTIONS: readonly number[] = [3, 5, 7, 10];
 /** Default winning score (classic Catch Phrase). */
 export const DEFAULT_TARGET_SCORE = 7;
 
+/** Solo mode: selectable "N strikes and you're out" limits. */
+export const STRIKE_LIMIT_OPTIONS: readonly number[] = [2, 3, 5];
+export const DEFAULT_STRIKE_LIMIT = 3;
+
+/** Solo mode player count. Two players should just play 1-v-1 teams. */
+export const SOLO_MIN_PLAYERS = 3;
+export const SOLO_MAX_PLAYERS = 10;
+
+/** Longest team/player name accepted from the setup screen or storage. */
+export const MAX_NAME_LENGTH = 14;
+
 /** Round duration is drawn uniformly from this range (hidden from players). */
 export const ROUND_DURATION_MIN_MS = 45_000;
 export const ROUND_DURATION_MAX_MS = 90_000;
@@ -22,23 +33,19 @@ export const BEEP_PHASES: readonly Readonly<{
   { endFraction: 1.0, intervalMs: 280 },
 ];
 
-/** Beep tone (Hz) and duration. */
-export const BEEP_FREQUENCY_HZ = 880;
-export const BEEP_DURATION_MS = 80;
+/** Vibration patterns (ms on/off), where supported (not iOS). */
+export const BUZZER_VIBRATION_PATTERN: readonly number[] = [600, 120, 600, 120, 900];
+export const CORRECT_VIBRATION_PATTERN: readonly number[] = [35];
 
-/** Buzzer tone (Hz) and duration. */
-export const BUZZER_FREQUENCY_HZ = 160;
-export const BUZZER_DURATION_MS = 1_200;
-
-/** Rising two-note chime played when a phrase is guessed correctly. */
-export const CORRECT_TONE_FREQUENCIES: readonly number[] = [660, 988];
-export const CORRECT_TONE_DURATION_MS = 90;
-
-/** Vibration pattern (ms on/off) fired with the buzzer, where supported. */
-export const BUZZER_VIBRATION_PATTERN: readonly number[] = [400, 100, 400];
+/** Ignore a second "Got it!" tap this soon after the first (accidental double tap). */
+export const CORRECT_TAP_COOLDOWN_MS = 450;
 
 /** Default team names shown on the home screen. */
 export const DEFAULT_TEAM_NAMES: readonly [string, string] = ["Team 1", "Team 2"];
+
+/** Prefix for blank solo player names ("Player 1", "Player 2", …). */
+export const DEFAULT_PLAYER_PREFIX = "Player";
+export const DEFAULT_TEAM_PREFIX = "Team";
 
 /**
  * Placeholder for a future per-turn skip limit setting.

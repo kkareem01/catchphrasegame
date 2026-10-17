@@ -1,55 +1,60 @@
 import { DEFAULT_TARGET_SCORE, DEFAULT_TEAM_NAMES } from "./constants";
 import { drawPhrase, requeueSkipped } from "./deck";
-import type { GameEvent, GameState, Rng, TeamIndex } from "./types";
+import { isStealPending, nextHolderIndex, otherTeamIndex } from "./selectors";
+import { isValidRoster } from "./setup";
+import type { GameEvent, GameState, Rng } from "./types";
 
 export const createInitialState = (): GameState => ({
   phase: "setup",
-  teams: [
-    { name: DEFAULT_TEAM_NAMES[0], score: 0 },
-    { name: DEFAULT_TEAM_NAMES[1], score: 0 },
-  ],
-  holdingTeam: 0,
+  competitors: DEFAULT_TEAM_NAMES.map((name) => ({ name, score: 0 })),
+  holder: 0,
   deck: { remaining: [], used: [] },
   currentPhrase: null,
   settings: {
+    mode: "teams",
     categoryId: "everything",
     stealRuleEnabled: false,
     targetScore: DEFAULT_TARGET_SCORE,
   },
-  lastPointWinner: null,
+  lastScorer: null,
 });
 
-const otherTeam = (team: TeamIndex): TeamIndex => (team === 0 ? 1 : 0);
-
-const awardPoints = (
+const addScore = (
   state: GameState,
-  team: TeamIndex,
+  index: number,
   points: number,
 ): GameState => {
-  const teams: GameState["teams"] = [
-    team === 0
-      ? { ...state.teams[0], score: state.teams[0].score + points }
-      : state.teams[0],
-    team === 1
-      ? { ...state.teams[1], score: state.teams[1].score + points }
-      : state.teams[1],
-  ];
+  const competitors = state.competitors.map((c, i) =>
+    i === index ? { ...c, score: c.score + points } : c,
+  );
   return {
     ...state,
-    teams,
-    lastPointWinner: team,
+    competitors,
+    lastScorer: index,
     phase:
-      teams[team].score >= state.settings.targetScore
+      competitors[index].score >= state.settings.targetScore
         ? "gameOver"
         : state.phase,
   };
 };
 
-/** In roundEnd with the steal rule on, the point is not yet awarded. */
-const isStealPending = (state: GameState): boolean =>
-  state.phase === "roundEnd" &&
-  state.settings.stealRuleEnabled &&
-  state.lastPointWinner === null;
+/** First round of a game: scores zeroed, first seat holding, phrase drawn. */
+const beginGame = (
+  state: GameState,
+  names: readonly string[],
+  rng: Rng,
+): GameState => {
+  const { deck, phrase } = drawPhrase(state.deck, rng);
+  return {
+    ...state,
+    phase: "roundActive",
+    competitors: names.map((name) => ({ name, score: 0 })),
+    holder: 0,
+    deck,
+    currentPhrase: phrase,
+    lastScorer: null,
+  };
+};
 
 /**
  * Pure game state machine. Events fired in the wrong phase return the state
@@ -63,20 +68,19 @@ export const gameReducer = (
 ): GameState => {
   switch (event.type) {
     case "START_GAME": {
-      if (state.phase !== "setup") return state;
-      const { deck, phrase } = drawPhrase(event.deck, rng);
-      return {
-        phase: "roundActive",
-        teams: [
-          { name: event.teams[0], score: 0 },
-          { name: event.teams[1], score: 0 },
-        ],
-        holdingTeam: 0,
-        deck,
-        currentPhrase: phrase,
-        settings: event.settings,
-        lastPointWinner: null,
-      };
+      const deckSize = event.deck.remaining.length + event.deck.used.length;
+      if (
+        state.phase !== "setup" ||
+        deckSize === 0 ||
+        !isValidRoster(event.settings.mode, event.names.length)
+      ) {
+        return state;
+      }
+      return beginGame(
+        { ...state, deck: event.deck, settings: event.settings },
+        event.names,
+        rng,
+      );
     }
 
     case "CORRECT": {
@@ -84,7 +88,7 @@ export const gameReducer = (
       const { deck, phrase } = drawPhrase(state.deck, rng);
       return {
         ...state,
-        holdingTeam: otherTeam(state.holdingTeam),
+        holder: nextHolderIndex(state),
         deck,
         currentPhrase: phrase,
       };
@@ -101,15 +105,18 @@ export const gameReducer = (
 
     case "BUZZER": {
       if (state.phase !== "roundActive") return state;
-      const ended: GameState = { ...state, phase: "roundEnd", lastPointWinner: null };
+      const ended: GameState = { ...state, phase: "roundEnd", lastScorer: null };
+      if (state.settings.mode === "solo") {
+        return addScore(ended, state.holder, 1);
+      }
       if (state.settings.stealRuleEnabled) return ended;
-      return awardPoints(ended, otherTeam(state.holdingTeam), 1);
+      return addScore(ended, otherTeamIndex(state.holder), 1);
     }
 
     case "RESOLVE_STEAL": {
       if (!isStealPending(state)) return state;
       const points = event.stolen ? 2 : 1;
-      return awardPoints(state, otherTeam(state.holdingTeam), points);
+      return addScore(state, otherTeamIndex(state.holder), points);
     }
 
     case "START_NEXT_ROUND": {
@@ -120,8 +127,17 @@ export const gameReducer = (
         phase: "roundActive",
         deck,
         currentPhrase: phrase,
-        lastPointWinner: null,
+        lastScorer: null,
       };
+    }
+
+    case "REMATCH": {
+      if (state.phase !== "gameOver") return state;
+      return beginGame(
+        state,
+        state.competitors.map((c) => c.name),
+        rng,
+      );
     }
 
     case "NEW_GAME":

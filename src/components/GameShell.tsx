@@ -5,6 +5,7 @@ import { GameOverScreen } from "@/components/screens/GameOverScreen";
 import { HomeScreen } from "@/components/screens/HomeScreen";
 import { RoundActiveScreen } from "@/components/screens/RoundActiveScreen";
 import { RoundEndScreen } from "@/components/screens/RoundEndScreen";
+import { useAudioUnlock } from "@/hooks/useAudioUnlock";
 import { useBackGuard } from "@/hooks/useBackGuard";
 import { useGame } from "@/hooks/useGame";
 import { useRoundTimer } from "@/hooks/useRoundTimer";
@@ -13,6 +14,7 @@ import { useWakeLock } from "@/hooks/useWakeLock";
 export function GameShell() {
   const { state, dispatch } = useGame();
 
+  useAudioUnlock();
   useRoundTimer();
   useWakeLock(state.phase === "roundActive");
 

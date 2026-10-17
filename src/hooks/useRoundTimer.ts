@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { beepPlayer } from "@/lib/audio/beepPlayer";
+import { gameAudio } from "@/lib/audio/gameAudio";
 import {
   generateBeepSchedule,
   generateRoundDurationMs,
@@ -9,9 +9,9 @@ import {
 import { useGame } from "./useGame";
 
 /**
- * Drives a round: picks the hidden duration, schedules the accelerating
- * beeps + buzzer on the audio clock, and dispatches BUZZER via a setTimeout
- * fallback so the game ends even when audio is unavailable or muted.
+ * Drives a round: picks the hidden duration, starts the accelerating beeps,
+ * and at time-up plays the buzzer and dispatches BUZZER. The timeout is the
+ * source of truth, so the round ends even when audio is unavailable.
  */
 export function useRoundTimer(): void {
   const { state, dispatch } = useGame();
@@ -21,16 +21,16 @@ export function useRoundTimer(): void {
     if (!isRoundActive) return;
 
     const durationMs = generateRoundDurationMs(Math.random);
-    const beepOffsets = generateBeepSchedule(durationMs);
-    beepPlayer.scheduleRound(beepOffsets, durationMs);
+    gameAudio.startRound(generateBeepSchedule(durationMs), durationMs);
 
     const buzzerTimeout = setTimeout(() => {
+      gameAudio.playBuzzer();
       dispatch({ type: "BUZZER" });
     }, durationMs);
 
     return () => {
       clearTimeout(buzzerTimeout);
-      beepPlayer.cancelAll();
+      gameAudio.stopRound();
     };
   }, [isRoundActive, dispatch]);
 }
