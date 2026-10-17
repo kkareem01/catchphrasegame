@@ -1,4 +1,8 @@
 import {
+  COOP_MAX_PLAYERS,
+  COOP_MIN_PLAYERS,
+  COOP_ROUND_OPTIONS,
+  DEFAULT_COOP_ROUNDS,
   DEFAULT_PLAYER_PREFIX,
   DEFAULT_STRIKE_LIMIT,
   DEFAULT_TARGET_SCORE,
@@ -21,6 +25,8 @@ export type SetupPrefs = Readonly<{
   stealRuleEnabled: boolean;
   targetScore: number;
   strikeLimit: number;
+  coopNames: readonly string[];
+  coopRounds: number;
 }>;
 
 export const DEFAULT_SETUP_PREFS: SetupPrefs = {
@@ -31,12 +37,33 @@ export const DEFAULT_SETUP_PREFS: SetupPrefs = {
   stealRuleEnabled: false,
   targetScore: DEFAULT_TARGET_SCORE,
   strikeLimit: DEFAULT_STRIKE_LIMIT,
+  coopNames: Array.from({ length: COOP_MIN_PLAYERS }, () => ""),
+  coopRounds: DEFAULT_COOP_ROUNDS,
 };
 
-export const isValidRoster = (mode: GameMode, count: number): boolean =>
-  mode === "teams"
-    ? count === 2
-    : count >= SOLO_MIN_PLAYERS && count <= SOLO_MAX_PLAYERS;
+const ROSTER_LIMITS: Record<GameMode, readonly [number, number]> = {
+  teams: [2, 2],
+  solo: [SOLO_MIN_PLAYERS, SOLO_MAX_PLAYERS],
+  coop: [COOP_MIN_PLAYERS, COOP_MAX_PLAYERS],
+};
+
+/** Game length for the chosen mode: points, strikes or bombs. */
+const GAME_LENGTH: Record<GameMode, (prefs: SetupPrefs) => number> = {
+  teams: (prefs) => prefs.targetScore,
+  solo: (prefs) => prefs.strikeLimit,
+  coop: (prefs) => prefs.coopRounds,
+};
+
+export const isValidRoster = (mode: GameMode, count: number): boolean => {
+  const [min, max] = ROSTER_LIMITS[mode];
+  return count >= min && count <= max;
+};
+
+/** The roster the home screen is editing for the chosen mode. */
+export const rosterFor = (prefs: SetupPrefs): readonly string[] =>
+  ({ teams: prefs.teamNames, solo: prefs.playerNames, coop: prefs.coopNames })[
+    prefs.mode
+  ];
 
 /** Trims names; blanks become "Team 2" / "Player 3" by seat number. */
 export const normalizeNames = (
@@ -51,7 +78,7 @@ export const toGameSettings = (prefs: SetupPrefs): GameSettings => ({
   mode: prefs.mode,
   categoryId: prefs.categoryId,
   stealRuleEnabled: prefs.mode === "teams" && prefs.stealRuleEnabled,
-  targetScore: prefs.mode === "teams" ? prefs.targetScore : prefs.strikeLimit,
+  targetScore: GAME_LENGTH[prefs.mode](prefs),
 });
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -77,8 +104,9 @@ export const parseSetupPrefs = (
   const d = DEFAULT_SETUP_PREFS;
   const teamNames = parseNames(raw.teamNames);
   const playerNames = parseNames(raw.playerNames);
+  const coopNames = parseNames(raw.coopNames);
   return {
-    mode: pick<GameMode>(raw.mode, ["teams", "solo"], d.mode),
+    mode: pick<GameMode>(raw.mode, ["teams", "solo", "coop"], d.mode),
     teamNames:
       teamNames?.length === 2 ? [teamNames[0], teamNames[1]] : d.teamNames,
     playerNames:
@@ -92,5 +120,8 @@ export const parseSetupPrefs = (
         : d.stealRuleEnabled,
     targetScore: pick(raw.targetScore, TARGET_SCORE_OPTIONS, d.targetScore),
     strikeLimit: pick(raw.strikeLimit, STRIKE_LIMIT_OPTIONS, d.strikeLimit),
+    coopNames:
+      coopNames && isValidRoster("coop", coopNames.length) ? coopNames : d.coopNames,
+    coopRounds: pick(raw.coopRounds, COOP_ROUND_OPTIONS, d.coopRounds),
   };
 };

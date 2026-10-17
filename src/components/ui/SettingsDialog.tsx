@@ -1,7 +1,12 @@
 "use client";
 
 import { gameAudio } from "@/lib/audio/gameAudio";
-import { STRIKE_LIMIT_OPTIONS, TARGET_SCORE_OPTIONS } from "@/lib/game/constants";
+import {
+  COOP_ROUND_OPTIONS,
+  COOP_SKIPS_PER_ROUND,
+  STRIKE_LIMIT_OPTIONS,
+  TARGET_SCORE_OPTIONS,
+} from "@/lib/game/constants";
 import type { SetupPrefs } from "@/lib/game/setup";
 import { BigButton } from "./BigButton";
 import { Modal } from "./Modal";
@@ -25,23 +30,39 @@ export function SettingsDialog({
   return (
     <Modal title="Settings" onDismiss={onClose}>
       <section className="mt-5">
-        <p className="mb-2 text-sm font-bold text-muted">
-          {isTeams ? "Points to win" : "Strikes and you're out"}
-        </p>
-        {isTeams ? (
-          <SegmentedControl
-            label="Points to win"
-            options={toOptions(TARGET_SCORE_OPTIONS)}
-            value={prefs.targetScore}
-            onChange={(targetScore) => onChange({ targetScore })}
-          />
+        {prefs.mode === "teams" ? (
+          <>
+            <p className="mb-2 text-sm font-bold text-muted">Points to win</p>
+            <SegmentedControl
+              label="Points to win"
+              options={toOptions(TARGET_SCORE_OPTIONS)}
+              value={prefs.targetScore}
+              onChange={(targetScore) => onChange({ targetScore })}
+            />
+          </>
+        ) : prefs.mode === "solo" ? (
+          <>
+            <p className="mb-2 text-sm font-bold text-muted">Strikes and you&apos;re out</p>
+            <SegmentedControl
+              label="Strikes to lose"
+              options={toOptions(STRIKE_LIMIT_OPTIONS)}
+              value={prefs.strikeLimit}
+              onChange={(strikeLimit) => onChange({ strikeLimit })}
+            />
+          </>
         ) : (
-          <SegmentedControl
-            label="Strikes to lose"
-            options={toOptions(STRIKE_LIMIT_OPTIONS)}
-            value={prefs.strikeLimit}
-            onChange={(strikeLimit) => onChange({ strikeLimit })}
-          />
+          <>
+            <p className="mb-2 text-sm font-bold text-muted">Bombs per game</p>
+            <SegmentedControl
+              label="Bombs per game"
+              options={toOptions(COOP_ROUND_OPTIONS)}
+              value={prefs.coopRounds}
+              onChange={(coopRounds) => onChange({ coopRounds })}
+            />
+            <p className="mt-2 px-1 text-sm text-muted">
+              {COOP_SKIPS_PER_ROUND} skips per bomb. Each bomb&apos;s fuse is shorter than the last.
+            </p>
+          </>
         )}
       </section>
 

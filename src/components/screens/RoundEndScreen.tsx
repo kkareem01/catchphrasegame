@@ -7,7 +7,7 @@ import { ScoreBoard } from "@/components/ui/ScoreBoard";
 import { useGame } from "@/hooks/useGame";
 import { useVibration } from "@/hooks/useVibration";
 import { BUZZER_VIBRATION_PATTERN } from "@/lib/game/constants";
-import { isStealPending, otherTeamIndex } from "@/lib/game/selectors";
+import { coopTotal, isStealPending, otherTeamIndex } from "@/lib/game/selectors";
 import type { GameState } from "@/lib/game/types";
 
 /**
@@ -23,6 +23,7 @@ export function RoundEndScreen() {
   const { mode } = state.settings;
   const caught = state.competitors[state.holder];
   const stealPending = isStealPending(state);
+  const isCoop = mode === "coop";
 
   useEffect(() => {
     vibrate(BUZZER_VIBRATION_PATTERN);
@@ -41,16 +42,18 @@ export function RoundEndScreen() {
           <div className="animate-slam">
             <p aria-hidden className="text-7xl leading-none">💥</p>
             <h2 className="mt-2 font-display text-5xl text-danger [text-shadow:0_4px_0_#5c0614,0_0_40px_rgb(255_77_94/0.5)]">
-              Time&apos;s up!
+              {isCoop ? "Boom!" : "Time's up!"}
             </h2>
           </div>
 
-          <p className="text-lg">
-            Caught holding it:{" "}
-            <span className="font-extrabold" style={{ color: competitorColor(mode, state.holder) }}>
-              {caught.name}
-            </span>
-          </p>
+          {isCoop ? null : (
+            <p className="text-lg">
+              Caught holding it:{" "}
+              <span className="font-extrabold" style={{ color: competitorColor(mode, state.holder) }}>
+                {caught.name}
+              </span>
+            </p>
+          )}
 
           <div className="w-full rounded-2xl border border-line bg-surface/80 px-4 py-3">
             <p className="text-xs font-bold uppercase tracking-wider text-muted">The phrase was</p>
@@ -88,8 +91,11 @@ export function RoundEndScreen() {
               disabled={!armed}
               className="flex flex-col items-center py-5"
             >
-              <span className="font-display text-2xl">Next round</span>
-              <span className="text-sm font-bold opacity-75">{caught.name} starts</span>
+              <span className="font-display text-2xl">{isCoop ? "Next bomb" : "Next round"}</span>
+              <span className="text-sm font-bold opacity-75">
+                {isCoop ? "Shorter fuse — " : ""}
+                {caught.name} starts
+              </span>
             </BigButton>
           )}
         </div>
@@ -111,6 +117,21 @@ function Outcome({ state }: Readonly<{ state: GameState }>) {
         </span>{" "}
         guess it for a bonus point?
       </p>
+    );
+  }
+  if (state.coop) {
+    const cleared = state.coop.roundScores[state.coop.roundScores.length - 1] ?? 0;
+    const bombsLeft = targetScore - state.coop.roundScores.length;
+    return (
+      <div>
+        <p className="font-display text-2xl">
+          {cleared} {cleared === 1 ? "phrase" : "phrases"} cleared
+        </p>
+        <p className="mt-1 text-muted">
+          Team score <span className="font-bold text-accent">{coopTotal(state)}</span> ·{" "}
+          {bombsLeft} {bombsLeft === 1 ? "bomb" : "bombs"} left
+        </p>
+      </div>
     );
   }
   if (state.lastScorer === null) return null;

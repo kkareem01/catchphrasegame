@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { BigButton } from "@/components/ui/BigButton";
 import { competitorColor } from "@/components/ui/colors";
 import { useGame } from "@/hooks/useGame";
-import { getWinners } from "@/lib/game/selectors";
+import { saveHighScore } from "@/hooks/useHighScore";
+import { coopTotal, getTopDescribers, getWinners } from "@/lib/game/selectors";
 import type { GameState } from "@/lib/game/types";
 
 const MEDALS = ["🥇", "🥈", "🥉"] as const;
@@ -17,10 +19,12 @@ export function GameOverScreen() {
       <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
         {state.settings.mode === "teams" ? (
           <TeamsHeadline state={state} />
-        ) : (
+        ) : state.settings.mode === "solo" ? (
           <SoloHeadline state={state} />
+        ) : (
+          <CoopSummary state={state} />
         )}
-        <Standings state={state} />
+        {state.settings.mode === "coop" ? null : <Standings state={state} />}
       </div>
 
       <div className="flex flex-col gap-4 pt-6 pb-[max(env(safe-area-inset-bottom),1rem)]">
@@ -40,6 +44,79 @@ export function GameOverScreen() {
       </div>
     </main>
   );
+}
+
+/** Co-op: the team's final score against its record, bomb by bomb. */
+function CoopSummary({ state }: Readonly<{ state: GameState }>) {
+  const total = coopTotal(state);
+  const { categoryId, targetScore } = state.settings;
+  const previousBest = state.coop?.previousBest ?? 0;
+  const roundScores = state.coop?.roundScores ?? [];
+  const mvps = getTopDescribers(state);
+
+  useEffect(() => {
+    saveHighScore(categoryId, targetScore, total);
+  }, [categoryId, targetScore, total]);
+
+  return (
+    <>
+      <div aria-hidden className="animate-buzzer-flash pointer-events-none fixed inset-0 z-10" />
+      <p aria-hidden className="animate-slam text-7xl leading-none">💥</p>
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Final score</p>
+      <p className="animate-slam font-display text-8xl leading-none text-accent [text-shadow:0_6px_0_#8a5d00]">
+        {total}
+      </p>
+      <RecordLine total={total} previousBest={previousBest} />
+
+      <ol className="animate-rise-in mt-3 flex flex-wrap justify-center gap-2 [animation-delay:150ms]">
+        {roundScores.map((score, index) => (
+          <li
+            key={index}
+            className="rounded-xl border border-line bg-surface/80 px-3 py-1.5 text-sm font-bold"
+          >
+            💣 {index + 1}: <span className="text-accent">{score}</span>
+          </li>
+        ))}
+      </ol>
+
+      {mvps.length > 0 ? (
+        <p className="animate-rise-in mt-2 text-muted [animation-delay:250ms]">
+          🎤 Top describer:{" "}
+          {mvps.map((index, i) => (
+            <span key={index}>
+              {i > 0 ? " & " : ""}
+              <span className="font-extrabold" style={{ color: competitorColor("coop", index) }}>
+                {state.competitors[index].name}
+              </span>
+            </span>
+          ))}{" "}
+          ({state.competitors[mvps[0]].score})
+        </p>
+      ) : null}
+    </>
+  );
+}
+
+function RecordLine({ total, previousBest }: Readonly<{ total: number; previousBest: number }>) {
+  if (total > previousBest && total > 0) {
+    return (
+      <p className="animate-rise-in rounded-full bg-go/15 px-4 py-1.5 font-display text-lg text-go">
+        🏆 New record!{previousBest > 0 ? ` (old best ${previousBest})` : ""}
+      </p>
+    );
+  }
+  if (previousBest > 0 && total === previousBest) {
+    return <p className="font-bold text-accent">Tied your best!</p>;
+  }
+  if (previousBest > 0) {
+    const short = previousBest - total;
+    return (
+      <p className="font-bold text-muted">
+        Best is {previousBest} — {short} short. Again?
+      </p>
+    );
+  }
+  return null;
 }
 
 function TeamsHeadline({ state }: Readonly<{ state: GameState }>) {

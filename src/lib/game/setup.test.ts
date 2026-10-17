@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  COOP_MAX_PLAYERS,
+  COOP_MIN_PLAYERS,
+  DEFAULT_COOP_ROUNDS,
   DEFAULT_STRIKE_LIMIT,
   DEFAULT_TARGET_SCORE,
   SOLO_MAX_PLAYERS,
@@ -57,6 +60,8 @@ describe("parseSetupPrefs", () => {
       stealRuleEnabled: true,
       targetScore: 10,
       strikeLimit: 5,
+      coopNames: ["Ann", "Bo"],
+      coopRounds: 5,
     };
     expect(parseSetupPrefs(saved, CATEGORY_IDS)).toEqual(saved);
   });
@@ -71,6 +76,8 @@ describe("parseSetupPrefs", () => {
         stealRuleEnabled: "yes",
         targetScore: 999,
         strikeLimit: 3,
+        coopNames: ["Solo"],
+        coopRounds: 4,
       },
       CATEGORY_IDS,
     );
@@ -107,6 +114,39 @@ describe("toGameSettings", () => {
       stealRuleEnabled: true,
     });
     expect(settings.targetScore).toBe(DEFAULT_STRIKE_LIMIT);
+    expect(settings.stealRuleEnabled).toBe(false);
+  });
+});
+
+describe("co-op setup", () => {
+  it("allows 2 to 10 co-op players", () => {
+    expect(isValidRoster("coop", COOP_MIN_PLAYERS - 1)).toBe(false);
+    expect(isValidRoster("coop", 2)).toBe(true);
+    expect(isValidRoster("coop", COOP_MAX_PLAYERS)).toBe(true);
+    expect(isValidRoster("coop", COOP_MAX_PLAYERS + 1)).toBe(false);
+  });
+
+  it("names blank co-op players by seat", () => {
+    expect(normalizeNames("coop", ["", "Bo"])).toEqual(["Player 1", "Bo"]);
+  });
+
+  it("defaults to two co-op players and the standard number of bombs", () => {
+    expect(DEFAULT_SETUP_PREFS.coopNames).toHaveLength(2);
+    expect(DEFAULT_SETUP_PREFS.coopRounds).toBe(DEFAULT_COOP_ROUNDS);
+  });
+
+  it("restores a saved co-op mode", () => {
+    expect(parseSetupPrefs({ mode: "coop" }, CATEGORY_IDS).mode).toBe("coop");
+  });
+
+  it("uses the number of bombs as the game length and disables stealing", () => {
+    const settings = toGameSettings({
+      ...DEFAULT_SETUP_PREFS,
+      mode: "coop",
+      coopRounds: 5,
+      stealRuleEnabled: true,
+    });
+    expect(settings.targetScore).toBe(5);
     expect(settings.stealRuleEnabled).toBe(false);
   });
 });

@@ -5,11 +5,15 @@ import {
 } from "./constants";
 import type { Rng } from "./types";
 
-/** Draws a hidden round duration uniformly from the configured range. */
-export const generateRoundDurationMs = (rng: Rng): number =>
+/**
+ * Draws a hidden round duration uniformly from the configured range,
+ * optionally scaled down (co-op bombs get shorter each round).
+ */
+export const generateRoundDurationMs = (rng: Rng, scale = 1): number =>
   Math.round(
-    ROUND_DURATION_MIN_MS +
-      rng() * (ROUND_DURATION_MAX_MS - ROUND_DURATION_MIN_MS),
+    scale *
+      (ROUND_DURATION_MIN_MS +
+        rng() * (ROUND_DURATION_MAX_MS - ROUND_DURATION_MIN_MS)),
   );
 
 /**

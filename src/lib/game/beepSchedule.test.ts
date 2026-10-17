@@ -24,6 +24,13 @@ describe("generateRoundDurationMs", () => {
       expect(duration).toBeLessThanOrEqual(ROUND_DURATION_MAX_MS);
     }
   });
+
+  it("scales the whole range for shorter co-op bombs", () => {
+    expect(generateRoundDurationMs(() => 0, 0.5)).toBe(ROUND_DURATION_MIN_MS / 2);
+    expect(generateRoundDurationMs(() => 0.999999, 0.5)).toBeLessThanOrEqual(
+      ROUND_DURATION_MAX_MS / 2,
+    );
+  });
 });
 
 describe("generateBeepSchedule", () => {

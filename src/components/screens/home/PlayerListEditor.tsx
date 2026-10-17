@@ -1,23 +1,24 @@
 "use client";
 
 import { competitorColor } from "@/components/ui/colors";
-import {
-  DEFAULT_PLAYER_PREFIX,
-  MAX_NAME_LENGTH,
-  SOLO_MAX_PLAYERS,
-  SOLO_MIN_PLAYERS,
-} from "@/lib/game/constants";
+import { DEFAULT_PLAYER_PREFIX, MAX_NAME_LENGTH } from "@/lib/game/constants";
 
-/** Free-for-all roster. Order = seating order around the circle. */
+/** Individual-player roster. Order = seating order around the circle. */
 export function PlayerListEditor({
   names,
   onChange,
+  minPlayers,
+  maxPlayers,
+  hint,
 }: Readonly<{
   names: readonly string[];
   onChange: (names: readonly string[]) => void;
+  minPlayers: number;
+  maxPlayers: number;
+  hint: string;
 }>) {
-  const canRemove = names.length > SOLO_MIN_PLAYERS;
-  const canAdd = names.length < SOLO_MAX_PLAYERS;
+  const canRemove = names.length > minPlayers;
+  const canAdd = names.length < maxPlayers;
 
   return (
     <div className="flex flex-col gap-2">
@@ -27,7 +28,7 @@ export function PlayerListEditor({
           return (
             <li
               key={index}
-              className="flex items-center gap-2 rounded-2xl border border-line bg-black/25 py-1 pr-1 pl-2"
+              className="flex items-center gap-2 rounded-2xl border border-line bg-black/25 py-1 pr-1 pl-2 transition-colors focus-within:border-accent"
             >
               <span
                 aria-hidden
@@ -70,9 +71,7 @@ export function PlayerListEditor({
           + Add player
         </button>
       ) : null}
-      <p className="px-1 text-xs text-muted">
-        Sit in a circle in this order — the phone travels round to the next seat.
-      </p>
+      <p className="px-1 text-xs text-muted">{hint}</p>
     </div>
   );
 }

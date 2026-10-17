@@ -6,6 +6,7 @@ import {
   generateBeepSchedule,
   generateRoundDurationMs,
 } from "@/lib/game/beepSchedule";
+import { getRoundDurationScale } from "@/lib/game/selectors";
 import { useGame } from "./useGame";
 
 /**
@@ -16,11 +17,13 @@ import { useGame } from "./useGame";
 export function useRoundTimer(): void {
   const { state, dispatch } = useGame();
   const isRoundActive = state.phase === "roundActive";
+  // Only changes between rounds, so it never restarts a round in progress.
+  const durationScale = getRoundDurationScale(state);
 
   useEffect(() => {
     if (!isRoundActive) return;
 
-    const durationMs = generateRoundDurationMs(Math.random);
+    const durationMs = generateRoundDurationMs(Math.random, durationScale);
     gameAudio.startRound(generateBeepSchedule(durationMs), durationMs);
 
     const buzzerTimeout = setTimeout(() => {
@@ -32,5 +35,5 @@ export function useRoundTimer(): void {
       clearTimeout(buzzerTimeout);
       gameAudio.stopRound();
     };
-  }, [isRoundActive, dispatch]);
+  }, [isRoundActive, durationScale, dispatch]);
 }

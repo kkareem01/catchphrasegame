@@ -26,6 +26,9 @@ export function RoundActiveScreen() {
   const nextIndex = nextHolderIndex(state);
   const nextColor = competitorColor(mode, nextIndex);
   const phrase = state.currentPhrase ?? "";
+  const skipsLeft = state.coop?.skipsLeft ?? null;
+  const skipLabel =
+    skipsLeft === null ? "Skip" : skipsLeft === 0 ? "No skips left" : `Skip (${skipsLeft} left)`;
 
   const handleCorrect = () => {
     // A double tap would otherwise skip the next describer entirely.
@@ -100,9 +103,10 @@ export function RoundActiveScreen() {
           <BigButton
             onClick={() => dispatch({ type: "SKIP" })}
             variant="secondary"
+            disabled={skipsLeft === 0}
             className="py-3.5 text-lg"
           >
-            Skip
+            {skipLabel}
           </BigButton>
         </div>
       </div>

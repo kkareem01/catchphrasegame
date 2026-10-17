@@ -1,8 +1,8 @@
 # Catch Phrase 🎉
 
 A pass-and-play party game for the browser. One phone, two teams (or a
-free-for-all for any number of players), a hidden timer, and a buzzer nobody
-wants to be holding.
+free-for-all for any number of players, or a two-player co-op), a hidden
+timer, and a buzzer nobody wants to be holding.
 
 **Stack:** Next.js (App Router) · TypeScript · Tailwind CSS · installable PWA
 (works offline). Pure client-side — no backend.
@@ -22,6 +22,11 @@ wants to be holding.
    - **Free-for-all** (3–10 players — any odd or even count): whoever is
      caught holding the phone takes a strike. Hit the strike limit and you're
      out; fewest strikes wins.
+   - **Beat the Bomb** (co-op, 2+ players — great for two): everyone is on
+     one team. Each phrase cleared adds to the team score; 3 skips per bomb.
+     After each bomb the next one has a shorter fuse. Play 3 (or 5) bombs
+     and try to beat your saved high score (kept per category and bomb
+     count).
 5. **Rematch** keeps the same players and settings.
 
 **Optional steal rule** (Teams, in Rules & sound): after the buzzer, the

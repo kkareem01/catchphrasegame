@@ -20,7 +20,7 @@ export function TeamNamesEditor({
         return (
           <label
             key={index}
-            className="flex flex-col gap-1 rounded-2xl border-2 px-3 pt-2 pb-2.5"
+            className="flex flex-col gap-1 rounded-2xl border-2 px-3 pt-2 pb-2.5 focus-within:!border-accent"
             style={{ borderColor: tint(color, 45), background: tint(color, 8) }}
           >
             <span className="text-[0.7rem] font-bold uppercase tracking-wider" style={{ color }}>

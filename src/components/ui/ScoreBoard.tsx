@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useGame } from "@/hooks/useGame";
+import { coopTotal } from "@/lib/game/selectors";
+import type { GameState } from "@/lib/game/types";
 import { competitorColor, tint } from "./colors";
 import { ConfirmDialog } from "./ConfirmDialog";
 
@@ -14,14 +16,14 @@ export function ScoreBoard({
 }: Readonly<{ showHolder?: boolean }>) {
   const { state, dispatch } = useGame();
   const [confirming, setConfirming] = useState(false);
-  const { mode, targetScore } = state.settings;
+  const { mode } = state.settings;
 
   return (
     <>
       <header className="flex flex-col gap-2 px-4 pt-[max(env(safe-area-inset-top),0.875rem)] pb-2">
         <div className="flex items-center justify-between gap-3">
           <span className="text-[0.7rem] font-bold uppercase tracking-wider text-muted">
-            {mode === "teams" ? `First to ${targetScore} wins` : `${targetScore} strikes and you're out`}
+            {headerLabel(state)}
           </span>
           <button
             type="button"
@@ -33,8 +35,10 @@ export function ScoreBoard({
         </div>
         {mode === "teams" ? (
           <TeamScores showHolder={showHolder} />
-        ) : (
+        ) : mode === "solo" ? (
           <PlayerStrikes showHolder={showHolder} />
+        ) : (
+          <CoopStatus />
         )}
       </header>
 
@@ -48,6 +52,59 @@ export function ScoreBoard({
         />
       ) : null}
     </>
+  );
+}
+
+const headerLabel = ({ settings }: GameState): string => {
+  switch (settings.mode) {
+    case "teams":
+      return `First to ${settings.targetScore} wins`;
+    case "solo":
+      return `${settings.targetScore} strikes and you're out`;
+    case "coop":
+      return "Beat the Bomb";
+  }
+};
+
+/** Co-op: bombs left, team score, and the record to beat. */
+function CoopStatus() {
+  const { state } = useGame();
+  if (!state.coop) return null;
+  const { roundScores, previousBest } = state.coop;
+  const bombs = state.settings.targetScore;
+  const current = roundScores.length - 1;
+  const total = coopTotal(state);
+
+  return (
+    <div className="flex items-stretch gap-2">
+      <div
+        className="flex flex-col items-center justify-center rounded-2xl border border-line bg-black/25 px-3 py-1.5"
+        aria-label={`Bomb ${current + 1} of ${bombs}`}
+      >
+        <span aria-hidden className="flex gap-0.5 text-lg leading-none">
+          {Array.from({ length: bombs }, (_, i) => (
+            <span key={i} className={i > current ? "opacity-30 grayscale" : ""}>
+              {i < current ? "💥" : "💣"}
+            </span>
+          ))}
+        </span>
+        <span className="mt-1 text-[0.65rem] font-bold uppercase tracking-wider text-muted">
+          Bomb {current + 1} of {bombs}
+        </span>
+      </div>
+      <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-accent/50 bg-accent/10 py-1.5">
+        <span className="font-display text-3xl leading-none tabular-nums text-accent">{total}</span>
+        <span className="text-[0.65rem] font-bold uppercase tracking-wider text-muted">
+          Team score
+        </span>
+      </div>
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-line bg-black/25 px-3 py-1.5">
+        <span className="font-display text-xl leading-none tabular-nums">
+          {previousBest > 0 ? previousBest : "—"}
+        </span>
+        <span className="text-[0.65rem] font-bold uppercase tracking-wider text-muted">Best</span>
+      </div>
+    </div>
   );
 }
 
